@@ -18,6 +18,27 @@ It includes:
 - Compact resource cards
 - A working sample dataset based on the DSG Team Next Steps structure
 
+## GitHub Pages setup
+
+The first deployment workflow failed because this repository is not yet configured for GitHub Pages deployment through Actions.
+
+For the prototype, use the simpler Pages setup:
+
+1. Open the repository on GitHub.
+2. Go to **Settings > Pages**.
+3. Under **Build and deployment**, choose **Deploy from a branch**.
+4. Select branch: `main`.
+5. Select folder: `/ (root)`.
+6. Save.
+
+After GitHub finishes publishing, the prototype should be available at:
+
+```text
+https://admindsg.github.io/hmtl/
+```
+
+The failing Actions workflow was removed so it should not keep sending failed-run emails.
+
 ## Intended future workflow
 
 The DSG Leadership Cockpit remains the source of truth.
@@ -27,7 +48,7 @@ Future flow:
 1. Refresh the DSG Leadership Cockpit.
 2. Export selected rows from maintained tabs into JSON.
 3. Commit the JSON files to this repo.
-4. The GitHub Pages site updates automatically.
+4. The GitHub Pages site updates from the branch source.
 
 Suggested source tabs:
 
