@@ -1,0 +1,122 @@
+[
+  {
+    "id": "dsg-website",
+    "label": "DSG Website",
+    "category": "Brand",
+    "tool": "Website",
+    "url": "https://discoverysoundgarden.com/",
+    "useWhen": "Use for public-facing reference, brand context, and external links."
+  },
+  {
+    "id": "dsg-share-folder",
+    "label": "DSG Share Folder",
+    "category": "Drive",
+    "tool": "Google Drive",
+    "url": "https://drive.google.com/drive/folders/1i8yx3UiUd85OW7equ5bGluUMIJllX_B1",
+    "useWhen": "Use as the main shared storage location for team files and final deliverables."
+  },
+  {
+    "id": "zeffy",
+    "label": "Zeffy",
+    "category": "Registration",
+    "tool": "Zeffy",
+    "url": "https://www.zeffy.com/en-US/o/fundraising/campaigns",
+    "useWhen": "Use for registrant lists, campaigns, workshop communication, and donation-related records."
+  },
+  {
+    "id": "dsg-gpt",
+    "label": "DSG GPT",
+    "category": "AI",
+    "tool": "ChatGPT",
+    "url": "https://chatgpt.com/g/g-XasGnTpjx-dsg-gpt",
+    "useWhen": "Use to draft DSG-branded email copy, HTML blocks, brief language, prompts, and review checklists."
+  },
+  {
+    "id": "canva",
+    "label": "Canva",
+    "category": "Design",
+    "tool": "Canva",
+    "url": "https://www.canva.com/",
+    "useWhen": "Use for final designed assets, graphics, and branded visual templates."
+  },
+  {
+    "id": "buffer",
+    "label": "Buffer Schedule",
+    "category": "Social",
+    "tool": "Buffer",
+    "url": "https://publish.buffer.com/channels/6a27a98f8f1d11f9b2684e9f/schedule",
+    "useWhen": "Use for social scheduling after copy and assets are reviewed."
+  },
+  {
+    "id": "manychat",
+    "label": "Manychat Automations",
+    "category": "Automation",
+    "tool": "Manychat",
+    "url": "https://app.manychat.com/fb5033825/cms?path=/&field=modified&order=desc",
+    "useWhen": "Use for Messenger or automation review when a workflow touches chatbot messaging."
+  },
+  {
+    "id": "meta-business-suite",
+    "label": "Meta Business Suite",
+    "category": "Social",
+    "tool": "Meta",
+    "url": "https://business.facebook.com/latest/home?asset_id=980405748485726&business_id=825029847238433&ir_qe_exposed=1",
+    "useWhen": "Use for Facebook or Instagram business account management and post review."
+  },
+  {
+    "id": "relay",
+    "label": "Relay",
+    "category": "Finance",
+    "tool": "Relay",
+    "url": "https://app.relayfi.com/business/discovery-sound-garden/home",
+    "useWhen": "Use for banking, receipts, payments, and finance cleanup tasks."
+  },
+  {
+    "id": "ny-charities",
+    "label": "NY Charities Registration",
+    "category": "Compliance",
+    "tool": "NYS OAG",
+    "url": "https://ag.ny.gov/resources/organizations/charities-nonprofits-fundraisers/charities-registration",
+    "useWhen": "Use for New York charities registration filing and compliance reference."
+  },
+  {
+    "id": "irs-nonprofits",
+    "label": "IRS Charities and Nonprofits",
+    "category": "Compliance",
+    "tool": "IRS",
+    "url": "https://www.irs.gov/charities-and-nonprofits",
+    "useWhen": "Use for federal nonprofit compliance reference."
+  },
+  {
+    "id": "stay-exempt",
+    "label": "IRS StayExempt",
+    "category": "Compliance",
+    "tool": "IRS",
+    "url": "https://www.stayexempt.irs.gov/",
+    "useWhen": "Use for nonprofit compliance learning and board/admin education."
+  },
+  {
+    "id": "awesome-foundation",
+    "label": "Awesome Foundation Submission",
+    "category": "Funding",
+    "tool": "Awesome Foundation",
+    "url": "https://www.awesomefoundation.org/en/submissions/new",
+    "useWhen": "Use when staging or submitting a lightweight funding idea."
+  },
+  {
+    "id": "ny-community-trust",
+    "label": "New York Community Trust",
+    "category": "Funding",
+    "tool": "NYCT",
+    "url": "https://thenytrust.org/nonprofits/",
+    "useWhen": "Use for funding fit research and grant readiness."
+  },
+  {
+    "id": "nysca-start-here",
+    "label": "NYSCA Start Here",
+    "category": "Funding",
+    "tool": "NYSCA",
+    "url": "https://arts.ny.gov/starthere",
+    "useWhen": "Use for New York arts funding orientation and eligibility review."
+  }
+]
