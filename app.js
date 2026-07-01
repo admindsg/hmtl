@@ -29,7 +29,11 @@ const els = {
   resourceGrid: document.querySelector('#resourceGrid'),
   resultsMeta: document.querySelector('#resultsMeta'),
   andrewWork: document.querySelector('#andrewWork'),
-  meetingsList: document.querySelector('#meetingsList')
+  andrewMeta: document.querySelector('#andrewMeta'),
+  meetingsList: document.querySelector('#meetingsList'),
+  suggestTaskForm: document.querySelector('#suggestTaskForm'),
+  taskSuggestion: document.querySelector('#taskSuggestion'),
+  suggestionStatus: document.querySelector('#suggestionStatus')
 };
 
 async function loadData() {
@@ -155,6 +159,7 @@ function renderTaskDetail(task) {
 function renderAndrewWork() {
   const andrewTasks = state.tasks.filter(task => personMatches(task, 'Andrew')).sort((a, b) => (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99) || a.title.localeCompare(b.title));
   if (!els.andrewWork) return;
+  if (els.andrewMeta) els.andrewMeta.textContent = andrewTasks.length === 1 ? '1 item' : `${andrewTasks.length} items`;
   els.andrewWork.innerHTML = andrewTasks.map(task => `<button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)}</span></button>`).join('');
   els.andrewWork.querySelectorAll('[data-task-id]').forEach(button => {
     button.addEventListener('click', () => {
@@ -195,6 +200,26 @@ function renderResources() {
   });
 }
 
+function handleSuggestionSubmit(event) {
+  event.preventDefault();
+  const suggestion = els.taskSuggestion.value.trim();
+  if (!suggestion) {
+    els.suggestionStatus.textContent = 'Add a task note first.';
+    return;
+  }
+  const subject = 'DSG Hub task suggestion';
+  const body = [
+    'Task suggestion:',
+    suggestion,
+    '',
+    'Suggested from the DSG Communications Hub.',
+    `Page: ${window.location.href}`
+  ].join('\n');
+  const mailto = `mailto:admin@discoverysoundgarden.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailto;
+  els.suggestionStatus.textContent = 'Opening an email to Andrew.';
+}
+
 function setFilter(key, value) {
   state.filters[key] = value;
   render();
@@ -207,6 +232,7 @@ function escapeHtml(text) {
 els.searchInput.addEventListener('input', event => setFilter('search', event.target.value));
 els.personFilter.addEventListener('change', event => setFilter('person', event.target.value));
 els.departmentFilter.addEventListener('change', event => setFilter('department', event.target.value));
+if (els.suggestTaskForm) els.suggestTaskForm.addEventListener('submit', handleSuggestionSubmit);
 
 loadData().catch(error => {
   els.taskList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
