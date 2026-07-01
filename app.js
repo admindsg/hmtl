@@ -29,14 +29,10 @@ const els = {
   statusFilter: document.querySelector('#statusFilter'),
   ownerFilter: document.querySelector('#ownerFilter'),
   sortSelect: document.querySelector('#sortSelect'),
-  quickFilters: document.querySelector('#quickFilters'),
   taskGrid: document.querySelector('#taskGrid'),
   resourceGrid: document.querySelector('#resourceGrid'),
   taskTemplate: document.querySelector('#taskTemplate'),
-  taskCount: document.querySelector('#taskCount'),
-  highCount: document.querySelector('#highCount'),
-  reviewCount: document.querySelector('#reviewCount'),
-  resourceCount: document.querySelector('#resourceCount')
+  resultsMeta: document.querySelector('#resultsMeta')
 };
 
 async function loadData() {
@@ -46,7 +42,7 @@ async function loadData() {
   ]);
 
   if (!tasksResponse.ok || !resourcesResponse.ok) {
-    throw new Error('Could not load hub data. Try serving the folder with a local web server.');
+    throw new Error('Could not load hub data. If previewing locally, serve the folder with a simple local web server.');
   }
 
   state.tasks = await tasksResponse.json();
@@ -79,6 +75,11 @@ function populateFilters() {
 }
 
 function getSearchText(task) {
+  const linkedResources = (task.links || [])
+    .map(linkId => state.resourceMap.get(linkId))
+    .filter(Boolean)
+    .map(resource => `${resource.label} ${resource.category} ${resource.tool} ${resource.useWhen}`);
+
   return [
     task.title,
     task.category,
@@ -95,7 +96,8 @@ function getSearchText(task) {
     task.saveFinalIn,
     task.context,
     task.prompt,
-    ...(task.nextSteps || [])
+    ...(task.nextSteps || []),
+    ...linkedResources
   ].join(' ').toLowerCase();
 }
 
@@ -129,18 +131,21 @@ function renderTasks() {
   const tasks = filterTasks();
   els.taskGrid.innerHTML = '';
 
+  els.resultsMeta.textContent = tasks.length === 1
+    ? 'Showing 1 matching task. Open the card, use the task links, then copy the prompt if helpful.'
+    : `Showing ${tasks.length} matching tasks. Pick the card that matches your lane and open only what you need.`;
+
   if (!tasks.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No matching tasks. Try clearing a filter or searching a broader term.';
+    empty.textContent = 'No matching tasks. Try searching a person, tool, folder, or project name.';
     els.taskGrid.appendChild(empty);
+    return;
   }
 
   tasks.forEach(task => {
     const node = els.taskTemplate.content.cloneNode(true);
-    const article = node.querySelector('.task-card');
 
-    article.dataset.category = task.category;
     node.querySelector('.category').textContent = task.category;
     node.querySelector('.status').textContent = task.status;
     node.querySelector('h3').textContent = task.title;
@@ -170,6 +175,7 @@ function renderTasks() {
       a.target = '_blank';
       a.rel = 'noreferrer';
       a.textContent = resource.label;
+      a.title = resource.useWhen;
       links.appendChild(a);
     });
 
@@ -182,29 +188,37 @@ function renderTasks() {
 
     els.taskGrid.appendChild(node);
   });
-
-  updateCounts(tasks);
 }
 
 function renderResources() {
   els.resourceGrid.innerHTML = '';
-  state.resources.forEach(resource => {
-    const card = document.createElement('article');
-    card.className = 'resource-card';
-    card.innerHTML = `
-      <h3>${escapeHtml(resource.label)}</h3>
-      <p>${escapeHtml(resource.useWhen)}</p>
-      <a href="${resource.url}" target="_blank" rel="noreferrer">Open ${escapeHtml(resource.tool)}</a>
-    `;
-    els.resourceGrid.appendChild(card);
-  });
-}
+  const byCategory = new Map();
 
-function updateCounts(visibleTasks) {
-  els.taskCount.textContent = visibleTasks.length;
-  els.highCount.textContent = visibleTasks.filter(task => task.priority === 'High').length;
-  els.reviewCount.textContent = visibleTasks.filter(task => /review|approve|needs/i.test(task.status)).length;
-  els.resourceCount.textContent = state.resources.length;
+  state.resources.forEach(resource => {
+    if (!byCategory.has(resource.category)) byCategory.set(resource.category, []);
+    byCategory.get(resource.category).push(resource);
+  });
+
+  [...byCategory.entries()].sort().forEach(([category, resources]) => {
+    const group = document.createElement('section');
+    group.className = 'resource-group';
+    group.innerHTML = `<h3>${escapeHtml(category)}</h3>`;
+
+    resources.forEach(resource => {
+      const card = document.createElement('article');
+      card.className = 'resource-card';
+      card.innerHTML = `
+        <div>
+          <strong>${escapeHtml(resource.label)}</strong>
+          <p>${escapeHtml(resource.useWhen)}</p>
+        </div>
+        <a href="${resource.url}" target="_blank" rel="noreferrer">Open</a>
+      `;
+      group.appendChild(card);
+    });
+
+    els.resourceGrid.appendChild(group);
+  });
 }
 
 function setFilter(key, value) {
@@ -228,14 +242,8 @@ els.statusFilter.addEventListener('change', event => setFilter('status', event.t
 els.ownerFilter.addEventListener('change', event => setFilter('owner', event.target.value));
 els.sortSelect.addEventListener('change', event => setFilter('sort', event.target.value));
 
-els.quickFilters.addEventListener('click', event => {
-  const button = event.target.closest('button[data-filter]');
-  if (!button) return;
-  els.categoryFilter.value = button.dataset.filter;
-  setFilter('category', button.dataset.filter);
-});
-
 loadData().catch(error => {
   els.taskGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+  if (els.resultsMeta) els.resultsMeta.textContent = 'Could not load tasks.';
   console.error(error);
 });
