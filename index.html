@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260701-full-workbook-context" />
+  <link rel="stylesheet" href="styles.css?v=20260701-andrew-suggestions" />
 </head>
 <body>
   <header class="site-header">
@@ -52,6 +52,24 @@
       </div>
     </section>
 
+    <section class="suggest-task-panel" aria-labelledby="suggest-task-title">
+      <div class="section-heading compact">
+        <div>
+          <div class="eyebrow dark">Team input</div>
+          <h2 id="suggest-task-title">Suggest a task</h2>
+        </div>
+        <p>Send Andrew a quick note with whatever context you have. He can review it before adding anything to the Cockpit or Hub.</p>
+      </div>
+      <form id="suggestTaskForm" class="suggest-task-form">
+        <label for="taskSuggestion">Task suggestion</label>
+        <textarea id="taskSuggestion" name="suggestion" rows="4" placeholder="What needs doing? Add owner, due date, links, or context if you know them." required></textarea>
+        <div class="form-actions">
+          <button type="submit">Email Andrew</button>
+          <p id="suggestionStatus" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+
     <section class="meetings-panel" aria-labelledby="meetings-title">
       <div class="section-heading compact">
         <div>
@@ -76,11 +94,16 @@
     </section>
 
     <section class="andrew-panel" aria-labelledby="andrew-title">
-      <div>
-        <div class="eyebrow dark">Current responsibilities</div>
-        <h2 id="andrew-title">Andrew's Work</h2>
-      </div>
-      <div id="andrewWork" class="andrew-list"></div>
+      <details class="andrew-disclosure">
+        <summary>
+          <span>
+            <span class="eyebrow dark">Current responsibilities</span>
+            <span id="andrew-title" class="andrew-title">Andrew's Work</span>
+          </span>
+          <span id="andrewMeta" class="summary-meta">Open list</span>
+        </summary>
+        <div id="andrewWork" class="andrew-list"></div>
+      </details>
     </section>
 
     <section class="resources-section" aria-labelledby="resource-title">
@@ -95,6 +118,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260701-full-workbook-context"></script>
+  <script src="app.js?v=20260701-andrew-suggestions"></script>
 </body>
 </html>
