@@ -1,0 +1,22 @@
+[
+  {
+    "id": "meeting-placeholder-board-followup",
+    "title": "Board Follow-Up / Team Working Session",
+    "date": "TBD",
+    "time": "From Google Calendar",
+    "owner": "Andrew",
+    "department": "Team Operations",
+    "purpose": "Review current cockpit tasks, blockers, approvals, and next moves.",
+    "source": "Google Calendar placeholder"
+  },
+  {
+    "id": "meeting-placeholder-workshop-postmortem",
+    "title": "Workshop Post-Mortem and Marketing Review",
+    "date": "TBD",
+    "time": "From Google Calendar",
+    "owner": "Andrew",
+    "department": "Marketing",
+    "purpose": "Review workshop performance, audience funnel, messaging, and next-cycle decisions.",
+    "source": "Google Calendar placeholder"
+  }
+]
