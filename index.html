@@ -10,8 +10,8 @@
   <header class="site-header">
     <div class="header-inner">
       <div class="eyebrow">Discovery Sound Garden</div>
-      <h1>Find your marching orders.</h1>
-      <p class="lede">Pick your lane, open the task, use the right links, copy the prompt, and move the work forward.</p>
+      <h1>Find the next thing.</h1>
+      <p class="lede">Choose a person or department, pick one task, then use the links and prompt to move it forward.</p>
       <div class="header-actions">
         <a class="button secondary" href="https://docs.google.com/document/d/1gDlTZHeX_KPWyOzzKfEwM41gIgzBMZjXakvno6OH2a0" target="_blank" rel="noreferrer">Brand Kit</a>
         <a class="button secondary" href="https://drive.google.com/drive/folders/1i8yx3UiUd85OW7equ5bGluUMIJllX_B1" target="_blank" rel="noreferrer">Share Folder</a>
@@ -24,114 +24,54 @@
     <section class="focus-panel" aria-labelledby="start-here">
       <div>
         <div class="eyebrow dark">Start here</div>
-        <h2 id="start-here">What do you need to move forward?</h2>
-        <p>Use search when you know the task. Use “My lane” when you want to find work connected to a person or role. Filters are tucked away so the first screen stays calm.</p>
+        <h2 id="start-here">No wall of tasks.</h2>
+        <p>This page now works like a task picker. Filter by name or department, then open one task detail at a time.</p>
       </div>
       <div class="role-cards">
-        <div><strong>Owner</strong><span>Move the task forward.</span></div>
-        <div><strong>Support</strong><span>Check in and help the owner succeed.</span></div>
-        <div><strong>Approves</strong><span>Review the final before it moves.</span></div>
+        <div><strong>Owner</strong><span>Moves the task forward.</span></div>
+        <div><strong>Support</strong><span>Checks in and helps the owner succeed.</span></div>
+        <div><strong>Approves</strong><span>Reviews the final before it moves.</span></div>
       </div>
     </section>
 
     <section class="search-card" aria-label="Find tasks">
-      <label class="search-label" for="searchInput">Search by task, person, tool, folder, or resource</label>
+      <label class="search-label" for="searchInput">Search</label>
       <input id="searchInput" type="search" placeholder="Try: Monae, Zeffy, Brand Kit, Funding, Workshop..." />
       <div class="lane-row">
         <label>
           My lane
-          <select id="ownerFilter"><option value="all">Everyone</option></select>
+          <select id="personFilter"><option value="all">Everyone</option></select>
         </label>
         <label>
-          Show
-          <select id="categoryFilter"><option value="all">All work</option></select>
+          Department
+          <select id="departmentFilter"><option value="all">All departments</option></select>
         </label>
       </div>
-      <details class="advanced-filters">
-        <summary>More filters</summary>
-        <div class="controls">
-          <label>
-            Tool
-            <select id="toolFilter"><option value="all">All tools</option></select>
-          </label>
-          <label>
-            Status
-            <select id="statusFilter"><option value="all">All statuses</option></select>
-          </label>
-          <label>
-            Sort
-            <select id="sortSelect">
-              <option value="priority">Most urgent first</option>
-              <option value="due">Due timing</option>
-              <option value="title">Title</option>
-              <option value="status">Status</option>
-            </select>
-          </label>
-        </div>
-      </details>
     </section>
 
-    <section class="results-heading" aria-live="polite">
-      <h2>Your matching tasks</h2>
-      <p id="resultsMeta">Loading tasks...</p>
+    <section class="workspace" aria-live="polite">
+      <aside class="task-picker" aria-label="Task list">
+        <div class="picker-heading">
+          <h2>Tasks</h2>
+          <p id="resultsMeta">Loading...</p>
+        </div>
+        <div id="taskList" class="task-list"></div>
+      </aside>
+
+      <section id="taskDetail" class="task-detail" aria-label="Selected task"></section>
     </section>
 
-    <section id="taskGrid" class="task-list" aria-live="polite"></section>
-
-    <details class="resource-drawer">
-      <summary>Open shared resource library</summary>
-      <section class="resources-section" aria-labelledby="resource-title">
-        <div class="section-heading">
-          <div>
-            <div class="eyebrow dark">Reference only</div>
-            <h2 id="resource-title">Shared Resource Library</h2>
-          </div>
-          <p>Use task-specific links first. Open this library only when you need a broader resource.</p>
+    <section class="resources-section" aria-labelledby="resource-title">
+      <div class="section-heading">
+        <div>
+          <div class="eyebrow dark">Shared library</div>
+          <h2 id="resource-title">Resources</h2>
         </div>
-        <div id="resourceGrid" class="resource-grid"></div>
-      </section>
-    </details>
+        <p>Spread out by category for browsing. Task cards still show the few links needed to complete that task.</p>
+      </div>
+      <div id="resourceGrid" class="resource-grid"></div>
+    </section>
   </main>
-
-  <template id="taskTemplate">
-    <article class="task-card">
-      <div class="card-topline">
-        <span class="badge category"></span>
-        <span class="badge status"></span>
-      </div>
-      <h3></h3>
-      <p class="context"></p>
-
-      <div class="next-action-block">
-        <strong>Deliverable</strong>
-        <p class="deliverable"></p>
-      </div>
-
-      <dl class="meta-grid">
-        <div><dt>Owner</dt><dd class="owner"></dd></div>
-        <div><dt>Support</dt><dd class="support"></dd></div>
-        <div><dt>Approves</dt><dd class="approves"></dd></div>
-        <div><dt>Due</dt><dd class="due"></dd></div>
-        <div><dt>Tool</dt><dd class="tool"></dd></div>
-        <div><dt>Save final in</dt><dd class="save"></dd></div>
-      </dl>
-
-      <div class="link-block">
-        <strong>Use these links</strong>
-        <div class="links"></div>
-      </div>
-
-      <details>
-        <summary>Steps to complete</summary>
-        <ol class="next-steps"></ol>
-      </details>
-      <details>
-        <summary>Prompt starter</summary>
-        <p class="prompt"></p>
-        <button class="copy-button" type="button">Copy prompt</button>
-      </details>
-    </article>
-  </template>
 
   <script src="app.js"></script>
 </body>
