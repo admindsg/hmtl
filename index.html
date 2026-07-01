@@ -83,11 +83,15 @@
         </div>
         <p>Send Andrew a quick note with whatever context you have. He can review it before adding anything to the Cockpit or Hub.</p>
       </div>
-      <form id="suggestTaskForm" class="suggest-task-form">
+      <form id="suggestTaskForm" class="suggest-task-form" action="https://formsubmit.co/ajax/admin@discoverysoundgarden.com" method="POST">
+        <input type="hidden" name="_subject" value="DSG Hub task suggestion">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <input id="suggestionPage" type="hidden" name="Page" value="">
         <label for="taskSuggestion">Task suggestion</label>
-        <textarea id="taskSuggestion" name="suggestion" rows="7" placeholder="What needs doing? Add owner, due date, links, or context if you know them." required></textarea>
+        <textarea id="taskSuggestion" name="Task suggestion" rows="7" placeholder="What needs doing? Add owner, due date, links, or context if you know them." required></textarea>
         <div class="form-actions">
-          <button type="submit">Email Andrew</button>
+          <button type="submit">Submit suggestion</button>
           <p id="suggestionStatus" role="status" aria-live="polite"></p>
         </div>
       </form>
@@ -118,6 +122,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260701-andrew-suggestions"></script>
+  <script src="app.js?v=20260701-clean-lanes-submit"></script>
 </body>
 </html>
