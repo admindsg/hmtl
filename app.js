@@ -7,9 +7,66 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-gmail-cockpit-intake';
+const dataVersion = '20260701-approved-intake-cache';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
+
+const approvedIntakeTasks = [
+  {
+    id: 'task-admin-email-forwarding-login-migration',
+    title: 'Review Admin Email Forwarding and Login Migration',
+    department: 'Operations / Technology',
+    category: 'Admin Accounts',
+    project: 'Hub Intake Follow-Up',
+    status: 'Needs Review',
+    priority: 'High',
+    owner: 'Andrew',
+    support: 'Admin support / Richard if rbaskin.dsg access is needed',
+    approves: 'Andrew',
+    due: 'This week',
+    tool: 'Gmail / Google Workspace Admin + account inventory + DSG GPT',
+    audience: 'Internal admin',
+    deliverable: 'A reviewed plan for forwarding rbaskin.dsg email to admin@discoverysoundgarden.com, keeping it organized separately, and migrating account logins only where Andrew approves the change.',
+    saveFinalIn: 'DSG Share Folder > Administration',
+    context: 'Hub intake suggested forwarding email from rbaskin.dsg to admin while keeping it separate, and updating account logins away from rbaskin.dsg. This touches access and security, so it needs review before any account changes.',
+    nextSteps: [
+      'Inventory which accounts still use rbaskin.dsg and whether each account should move to admin@discoverysoundgarden.com.',
+      'Confirm who controls rbaskin.dsg access and whether forwarding is appropriate.',
+      'Set an organization rule for labeling or separating forwarded mail before enabling forwarding.',
+      'Do not change passwords, ownership, recovery settings, or forwarding rules without Andrew approval.',
+      'Save only a status note and approved migration list; do not put credentials in the Hub or Cockpit.'
+    ],
+    links: ['dsg-share-folder', 'dsg-gpt', 'dsg-brief-builder'],
+    prompt: 'In DSG GPT, create a safe admin email and login migration checklist for DSG. Cover rbaskin.dsg forwarding, label/separation rules, account inventory, approval before login changes, credential safety, owner/support/approver, save location, and what evidence should be recorded without exposing private account details.'
+  },
+  {
+    id: 'task-omari-insurance-business-law-review',
+    title: 'Assign Omari Insurance and Business Law Review',
+    department: 'Compliance',
+    category: 'Governance / Risk',
+    project: 'Hub Intake Follow-Up',
+    status: 'Needs Review',
+    priority: 'High',
+    owner: 'Omari',
+    support: 'Andrew / Clark if finance or compliance documents are needed',
+    approves: 'Andrew / Board if policy or filing decisions are required',
+    due: 'Start this week; target one week or sooner',
+    tool: 'Google Docs + DSG GPT + official compliance resources',
+    audience: 'Internal leadership / board if decisions are needed',
+    deliverable: 'A short review note on insurance needs and business-law obligations DSG may need to address, including harassment, sexual harassment, bullying, and labor-law posting requirements.',
+    saveFinalIn: 'DSG Share Folder > Finance and Leadership & Strategy',
+    context: 'Hub intake asked Omari to look into insurance DSG needs or may not need, and what business laws need coverage. Treat this as scoped research, not a legal conclusion or automatic policy adoption.',
+    nextSteps: [
+      'Confirm the scope Andrew wants Omari to review first: insurance, workplace policies, labor-law postings, or all of the above.',
+      'Collect current DSG facts that affect applicability, such as employees, contractors, volunteers, events, board roles, and public programming.',
+      'Use official or professional sources and clearly separate confirmed requirements from questions for counsel or the board.',
+      'Prepare a short findings note with recommended next actions and decision owners.',
+      'Escalate any policy, insurance purchase, filing, or legal-risk decision to Andrew and the board as appropriate.'
+    ],
+    links: ['ny-charities', 'irs-nonprofits', 'stay-exempt', 'dsg-share-folder', 'dsg-gpt', 'dsg-brief-builder'],
+    prompt: 'In DSG GPT, create a scoped research brief for Omari on DSG insurance and business-law obligations. Include likely questions around insurance, harassment, sexual harassment, bullying, labor-law postings, nonprofit governance, what facts are needed before conclusions, official-source rules, owner/support/approver, due timing, and a short findings-note format. Do not present legal advice as final.'
+  }
+];
 
 const resourceGroups = [
   { title: 'Brand, Voice & Briefs', note: 'Use before anything public-facing or review-ready.', resources: ['dsg-brand-kit', 'dsg-brief-builder', 'dsg-website', 'dsg-gpt'] },
@@ -48,7 +105,7 @@ async function loadData() {
   if (!tasksResponse.ok || !resourcesResponse.ok) {
     throw new Error('Could not load hub data. If previewing locally, serve the folder with a simple local web server.');
   }
-  state.tasks = await tasksResponse.json();
+  state.tasks = [...await tasksResponse.json(), ...approvedIntakeTasks];
   state.resources = await resourcesResponse.json();
   state.meetings = meetingsResponse && meetingsResponse.ok ? await meetingsResponse.json() : [];
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
@@ -66,7 +123,7 @@ function splitPeople(value) {
 }
 
 function getPeople() {
-  return teamMembers.filter(person => state.tasks.some(task => personMatches(task, person)));
+  return teamMembers;
 }
 
 function addOptions(select, values) {
