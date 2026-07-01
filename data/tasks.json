@@ -23,8 +23,8 @@
       "Have Monae review the final communication before sending.",
       "Track responses and selected options."
     ],
-    "links": ["zeffy", "dsg-gpt", "dsg-share-folder"],
-    "prompt": "Use DSG Email Brief Builder to create a Zeffy HTML email from Richard to current July workshop registrants. Explain that the workshop is being reworked because registration numbers are small. Offer three options: 1:1 session, transfer to a future workshop, or refund. Richard also wants to learn who each registrant is and what they are interested in beyond the original workshop signup. Return plain text email copy, a branded HTML code block, subject line options, preview text, and a short review checklist. Keep the tone warm, clear, concise, and not overwhelming."
+    "links": ["zeffy", "dsg-gpt", "dsg-brand-kit", "dsg-share-folder"],
+    "prompt": "Use DSG Email Brief Builder to create a Zeffy HTML email from Richard to current July workshop registrants. Explain that the workshop is being reworked because registration numbers are small. Offer three options: 1:1 session, transfer to a future workshop, or refund. Richard also wants to learn who each registrant is and what they are interested in beyond the original workshop signup. Return plain text email copy, a branded HTML code block, subject line options, preview text, and a short review checklist. Keep the tone warm, clear, concise, and not overwhelming. Use the DSG Brand Kit for tone and formatting."
   },
   {
     "id": "task-team-next-steps-brief",
@@ -49,8 +49,8 @@
       "Add a short section summarizing what Andrew is carrying.",
       "Review for clarity before sending."
     ],
-    "links": ["dsg-gpt", "dsg-share-folder"],
-    "prompt": "Create a DSG team next-steps brief using the simple writing-block format. Include every current task, and for each task include context, deliverable, owner, support, approves, due, next steps, and use-these-links. Keep it clear, calm, and actionable. Add a short bottom section summarizing what Andrew is carrying. Do not include a brand voice box."
+    "links": ["dsg-gpt", "dsg-brand-kit", "dsg-share-folder"],
+    "prompt": "Create a DSG team next-steps brief using the simple writing-block format. Include every current task, and for each task include context, deliverable, owner, support, approves, due, next steps, and use-these-links. Keep it clear, calm, and actionable. Add a short bottom section summarizing what Andrew is carrying. Do not include a brand voice box. Use the DSG Brand Kit for tone."
   },
   {
     "id": "task-minutes-approval",
@@ -125,8 +125,8 @@
       "Prepare master org chart.",
       "Send to Andrew for first review."
     ],
-    "links": ["dsg-share-folder", "dsg-gpt"],
-    "prompt": "Create a role clarity work plan for DSG. Include purpose, deliverables, owner, support, approver, due date, save location, and a simple checklist for role descriptions, decision trees, and org chart draft."
+    "links": ["dsg-share-folder", "dsg-gpt", "ux-design-process"],
+    "prompt": "Create a role clarity work plan for DSG. Include purpose, deliverables, owner, support, approver, due date, save location, and a simple checklist for role descriptions, decision trees, and org chart draft. Keep the plan easy to follow for a non-technical team."
   },
   {
     "id": "task-marketing-postmortem",
@@ -151,8 +151,8 @@
       "Identify what must change before future dates.",
       "Capture decisions and next actions."
     ],
-    "links": ["buffer", "meta-business-suite", "canva", "dsg-share-folder"],
-    "prompt": "Create a DSG workshop post-mortem agenda and task brief. Include registration results, outreach review, funnel review, what worked, what failed, what needs to change, owner/support/approver, due date, save location, and a short decision log section."
+    "links": ["buffer", "meta-business-suite", "canva", "dsg-brand-kit", "getting-in-on-the-act", "barun-audience-engagement"],
+    "prompt": "Create a DSG workshop post-mortem agenda and task brief. Include registration results, outreach review, funnel review, audience engagement questions, what worked, what failed, what needs to change, owner/support/approver, due date, save location, and a short decision log section."
   },
   {
     "id": "task-finance-admin-cleanup",
@@ -198,12 +198,12 @@
     "context": "Funding opportunities are active, but materials should be staged carefully and sensitive language should be reviewed before external use.",
     "nextSteps": [
       "Stage core organizational materials.",
-      "Review Citizens NYC and other near-term fits.",
+      "Review near-term funding fits.",
       "Prepare concept note and metrics.",
       "Flag any identity or sponsor-benefit language for review.",
       "Save materials in the fundraising folder."
     ],
-    "links": ["ny-community-trust", "awesome-foundation", "nysca-start-here", "dsg-share-folder", "dsg-gpt"],
-    "prompt": "Create a DSG funding readiness brief. Include materials to stage, owner/support/approver, due date, save location, sensitive language review note, and a short checklist for IRS letter, budget, program description, impact metrics, equity narrative, and concept note."
+    "links": ["grants-folder", "dsg-brand-kit", "dsg-share-folder", "dsg-gpt"],
+    "prompt": "Create a DSG funding readiness brief. Include materials to stage, owner/support/approver, due date, save location, sensitive language review note, and a short checklist for IRS letter, budget, program description, impact metrics, equity narrative, and concept note. Use the Grants Folder and DSG Brand Kit as the primary resources."
   }
 ]
