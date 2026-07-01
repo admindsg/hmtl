@@ -8,12 +8,28 @@
     "useWhen": "Use for public-facing reference, brand context, and external links."
   },
   {
+    "id": "dsg-brand-kit",
+    "label": "DSG Brand Kit Info",
+    "category": "Brand",
+    "tool": "Google Docs",
+    "url": "https://docs.google.com/document/d/1gDlTZHeX_KPWyOzzKfEwM41gIgzBMZjXakvno6OH2a0",
+    "useWhen": "Use before drafting public or team-facing communications. Contains DSG voice, tone, mission, colors, typography, positioning, and program identity."
+  },
+  {
     "id": "dsg-share-folder",
     "label": "DSG Share Folder",
     "category": "Drive",
     "tool": "Google Drive",
     "url": "https://drive.google.com/drive/folders/1i8yx3UiUd85OW7equ5bGluUMIJllX_B1",
     "useWhen": "Use as the main shared storage location for team files and final deliverables."
+  },
+  {
+    "id": "grants-folder",
+    "label": "Grants Folder",
+    "category": "Funding",
+    "tool": "Google Drive",
+    "url": "https://drive.google.com/drive/folders/13-VwULY_MRY7C2eef38CHk1jzC8JXE32",
+    "useWhen": "Use for grant research, staged funding materials, funder notes, and development-ready documents."
   },
   {
     "id": "zeffy",
@@ -96,27 +112,67 @@
     "useWhen": "Use for nonprofit compliance learning and board/admin education."
   },
   {
-    "id": "awesome-foundation",
-    "label": "Awesome Foundation Submission",
-    "category": "Funding",
-    "tool": "Awesome Foundation",
-    "url": "https://www.awesomefoundation.org/en/submissions/new",
-    "useWhen": "Use when staging or submitting a lightweight funding idea."
+    "id": "getting-in-on-the-act",
+    "label": "Getting In On the Act",
+    "category": "Audience Engagement",
+    "tool": "Google Drive PDF",
+    "url": "https://drive.google.com/file/d/1Mfi5E3GvTYEpN_YtkL8FdUSLmRn9oUCA/view",
+    "useWhen": "Use for participatory arts, audience involvement spectrum, co-creation, and audience-as-artist framing."
   },
   {
-    "id": "ny-community-trust",
-    "label": "New York Community Trust",
-    "category": "Funding",
-    "tool": "NYCT",
-    "url": "https://thenytrust.org/nonprofits/",
-    "useWhen": "Use for funding fit research and grant readiness."
+    "id": "youtube-experience-video",
+    "label": "Experience / Engagement Video",
+    "category": "Audience Engagement",
+    "tool": "YouTube",
+    "url": "https://www.youtube.com/watch?v=NTih-l739w4",
+    "useWhen": "Use as a learning or discussion resource when shaping audience experience and engagement strategy."
   },
   {
-    "id": "nysca-start-here",
-    "label": "NYSCA Start Here",
-    "category": "Funding",
-    "tool": "NYSCA",
-    "url": "https://arts.ny.gov/starthere",
-    "useWhen": "Use for New York arts funding orientation and eligibility review."
+    "id": "ux-design-process",
+    "label": "UX Design Process",
+    "category": "UX",
+    "tool": "UXfolio",
+    "url": "https://blog.uxfol.io/ux-design-process/",
+    "useWhen": "Use when improving task flows, resource hubs, user journeys, and prototype structure."
+  },
+  {
+    "id": "hbr-new-experience-economy",
+    "label": "The New Experience Economy Webinar",
+    "category": "Experience Design",
+    "tool": "HBR",
+    "url": "https://hbr.org/webinar/2020/01/the-new-experience-economy",
+    "useWhen": "Use for experience economy framing and strategy discussion."
+  },
+  {
+    "id": "experience-economy-wiki",
+    "label": "Experience Economy Overview",
+    "category": "Experience Design",
+    "tool": "Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Experience_economy",
+    "useWhen": "Use for a quick concept overview of experience economy language and framing."
+  },
+  {
+    "id": "participations-wlazel",
+    "label": "Audience Participation Research PDF",
+    "category": "Audience Engagement",
+    "tool": "Participations PDF",
+    "url": "https://www.participations.org/18-02-18-wlazel.pdf",
+    "useWhen": "Use for deeper research on participation, audience meaning-making, and engagement theory."
+  },
+  {
+    "id": "hbr-welcome-experience-economy",
+    "label": "Welcome to the Experience Economy",
+    "category": "Experience Design",
+    "tool": "HBR",
+    "url": "https://hbr.org/1998/07/welcome-to-the-experience-economy",
+    "useWhen": "Use for classic experience economy framing and language."
+  },
+  {
+    "id": "barun-audience-engagement",
+    "label": "Making Sense of Audience Engagement",
+    "category": "Audience Engagement",
+    "tool": "GALA Choruses PDF",
+    "url": "https://galachoruses.org/sites/default/files/Barun-Making_Sense_of_Audience_Engagement.pdf",
+    "useWhen": "Use when developing audience engagement language, program framing, and workshop/post-mortem thinking."
   }
 ]
