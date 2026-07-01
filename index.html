@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DSG Communications Hub Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -25,7 +28,7 @@
       <div>
         <div class="eyebrow dark">Start here</div>
         <h2 id="start-here">No wall of tasks.</h2>
-        <p>This page now works like a task picker. Filter by name or department, then open one task detail at a time.</p>
+        <p>This page works like a task picker. Filter by name or department, then open one task detail at a time.</p>
       </div>
       <div class="role-cards">
         <div><strong>Owner</strong><span>Moves the task forward.</span></div>
@@ -36,7 +39,7 @@
 
     <section class="search-card" aria-label="Find tasks">
       <label class="search-label" for="searchInput">Search</label>
-      <input id="searchInput" type="search" placeholder="Try: Monae, Zeffy, Brand Kit, Funding, Workshop..." />
+      <input id="searchInput" type="search" placeholder="Try: Richard, Zeffy, Brand Kit, Funding, Workshop..." />
       <div class="lane-row">
         <label>
           My lane
@@ -47,6 +50,25 @@
           <select id="departmentFilter"><option value="all">All departments</option></select>
         </label>
       </div>
+    </section>
+
+    <section class="andrew-panel" aria-labelledby="andrew-title">
+      <div>
+        <div class="eyebrow dark">Andrew's work</div>
+        <h2 id="andrew-title">Current responsibilities</h2>
+      </div>
+      <div id="andrewWork" class="andrew-list"></div>
+    </section>
+
+    <section class="meetings-panel" aria-labelledby="meetings-title">
+      <div class="section-heading compact">
+        <div>
+          <div class="eyebrow dark">Calendar</div>
+          <h2 id="meetings-title">Upcoming meetings</h2>
+        </div>
+        <p>Placeholder structure for Google Calendar events. This can populate from Calendar through a scheduled cockpit refresh.</p>
+      </div>
+      <div id="meetingsList" class="meetings-list"></div>
     </section>
 
     <section class="workspace" aria-live="polite">
@@ -64,10 +86,10 @@
     <section class="resources-section" aria-labelledby="resource-title">
       <div class="section-heading">
         <div>
-          <div class="eyebrow dark">Shared library</div>
+          <div class="eyebrow light">Shared library</div>
           <h2 id="resource-title">Resources</h2>
         </div>
-        <p>Spread out by category for browsing. Task cards still show the few links needed to complete that task.</p>
+        <p>Spread out by category for browsing. Task details still show only the few links needed for that task.</p>
       </div>
       <div id="resourceGrid" class="resource-grid"></div>
     </section>
