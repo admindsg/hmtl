@@ -48,6 +48,22 @@
     "useWhen": "Use to draft DSG-branded email copy, HTML blocks, brief language, prompts, and review checklists."
   },
   {
+    "id": "complete-ai-bundle",
+    "label": "Complete AI Bundle",
+    "category": "AI Prompt Resources",
+    "tool": "Notion",
+    "url": "https://coursiv.notion.site/The-Complete-AI-Bundle-1ba03b4da88480369393f541c5309fff",
+    "useWhen": "Use for AI prompt examples, templates, and inspiration when building or improving DSG prompt workflows."
+  },
+  {
+    "id": "chatgpt-mega-prompt-bundle",
+    "label": "ChatGPT Mega Prompt Bundle",
+    "category": "AI Prompt Resources",
+    "tool": "Notion",
+    "url": "https://zimran.notion.site/ChatGPT-Mega-Prompt-Bundle-1306efef45758099a847c2ae38d85bf1",
+    "useWhen": "Use for prompt patterns and examples when improving GPT-assisted team workflows."
+  },
+  {
     "id": "canva",
     "label": "Canva",
     "category": "Design",
@@ -66,7 +82,7 @@
   {
     "id": "manychat",
     "label": "Manychat Automations",
-    "category": "Automation",
+    "category": "Social / Automation",
     "tool": "Manychat",
     "url": "https://app.manychat.com/fb5033825/cms?path=/&field=modified&order=desc",
     "useWhen": "Use for Messenger or automation review when a workflow touches chatbot messaging."
@@ -82,7 +98,7 @@
   {
     "id": "relay",
     "label": "Relay",
-    "category": "Finance",
+    "category": "Finance / Admin",
     "tool": "Relay",
     "url": "https://app.relayfi.com/business/discovery-sound-garden/home",
     "useWhen": "Use for banking, receipts, payments, and finance cleanup tasks."
