@@ -2,36 +2,23 @@ const state = {
   tasks: [],
   resources: [],
   resourceMap: new Map(),
+  selectedTaskId: null,
   filters: {
     search: '',
-    category: 'all',
-    tool: 'all',
-    status: 'all',
-    owner: 'all',
-    sort: 'priority'
+    person: 'all',
+    department: 'all'
   }
 };
 
 const priorityRank = { High: 1, Medium: 2, Low: 3 };
-const timingRank = {
-  Immediate: 1,
-  'This week': 2,
-  'July 1': 3,
-  'July 2': 4,
-  'July 3': 5,
-  'Next team call': 6
-};
 
 const els = {
   searchInput: document.querySelector('#searchInput'),
-  categoryFilter: document.querySelector('#categoryFilter'),
-  toolFilter: document.querySelector('#toolFilter'),
-  statusFilter: document.querySelector('#statusFilter'),
-  ownerFilter: document.querySelector('#ownerFilter'),
-  sortSelect: document.querySelector('#sortSelect'),
-  taskGrid: document.querySelector('#taskGrid'),
+  personFilter: document.querySelector('#personFilter'),
+  departmentFilter: document.querySelector('#departmentFilter'),
+  taskList: document.querySelector('#taskList'),
+  taskDetail: document.querySelector('#taskDetail'),
   resourceGrid: document.querySelector('#resourceGrid'),
-  taskTemplate: document.querySelector('#taskTemplate'),
   resultsMeta: document.querySelector('#resultsMeta')
 };
 
@@ -48,14 +35,30 @@ async function loadData() {
   state.tasks = await tasksResponse.json();
   state.resources = await resourcesResponse.json();
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
+  state.selectedTaskId = state.tasks[0]?.id || null;
 
   populateFilters();
   renderResources();
-  renderTasks();
+  render();
 }
 
-function uniqueValues(key) {
-  return [...new Set(state.tasks.map(task => task[key]).filter(Boolean))].sort();
+function splitPeople(value) {
+  return String(value || '')
+    .replace(/\bif\b.*$/i, '')
+    .replace(/Board Secretary/gi, '')
+    .split(/\/|,|&| and | for |\//i)
+    .map(name => name.trim())
+    .filter(Boolean)
+    .map(name => name.replace(/\s+support$/i, '').trim())
+    .filter(name => !['Board', 'Admin support', 'Marketing support', 'delegated researcher'].includes(name));
+}
+
+function getPeople() {
+  const people = new Set();
+  state.tasks.forEach(task => {
+    [...splitPeople(task.owner), ...splitPeople(task.support), ...splitPeople(task.approves)].forEach(person => people.add(person));
+  });
+  return [...people].sort();
 }
 
 function addOptions(select, values) {
@@ -68,10 +71,8 @@ function addOptions(select, values) {
 }
 
 function populateFilters() {
-  addOptions(els.categoryFilter, uniqueValues('category'));
-  addOptions(els.toolFilter, uniqueValues('tool'));
-  addOptions(els.statusFilter, uniqueValues('status'));
-  addOptions(els.ownerFilter, uniqueValues('owner'));
+  addOptions(els.personFilter, getPeople());
+  addOptions(els.departmentFilter, [...new Set(state.tasks.map(task => task.department || task.category).filter(Boolean))].sort());
 }
 
 function getSearchText(task) {
@@ -82,6 +83,7 @@ function getSearchText(task) {
 
   return [
     task.title,
+    task.department,
     task.category,
     task.project,
     task.status,
@@ -101,92 +103,119 @@ function getSearchText(task) {
   ].join(' ').toLowerCase();
 }
 
-function filterTasks() {
-  const query = state.filters.search.trim().toLowerCase();
+function personMatches(task, person) {
+  if (person === 'all') return true;
+  return [...splitPeople(task.owner), ...splitPeople(task.support), ...splitPeople(task.approves)].includes(person);
+}
 
+function filteredTasks() {
+  const query = state.filters.search.trim().toLowerCase();
   return state.tasks
     .filter(task => !query || getSearchText(task).includes(query))
-    .filter(task => state.filters.category === 'all' || task.category === state.filters.category)
-    .filter(task => state.filters.tool === 'all' || task.tool === state.filters.tool)
-    .filter(task => state.filters.status === 'all' || task.status === state.filters.status)
-    .filter(task => state.filters.owner === 'all' || task.owner === state.filters.owner)
-    .sort(sortTasks);
+    .filter(task => state.filters.department === 'all' || (task.department || task.category) === state.filters.department)
+    .filter(task => personMatches(task, state.filters.person))
+    .sort((a, b) => (priorityRank[a.priority] || 99) - (priorityRank[b.priority] || 99) || a.title.localeCompare(b.title));
 }
 
-function sortTasks(a, b) {
-  switch (state.filters.sort) {
-    case 'due':
-      return (timingRank[a.due] || 99) - (timingRank[b.due] || 99) || a.title.localeCompare(b.title);
-    case 'title':
-      return a.title.localeCompare(b.title);
-    case 'status':
-      return a.status.localeCompare(b.status) || a.title.localeCompare(b.title);
-    case 'priority':
-    default:
-      return (priorityRank[a.priority] || 99) - (priorityRank[b.priority] || 99) || a.title.localeCompare(b.title);
+function render() {
+  const tasks = filteredTasks();
+  els.resultsMeta.textContent = tasks.length === 1 ? '1 task found' : `${tasks.length} tasks found`;
+
+  if (!tasks.some(task => task.id === state.selectedTaskId)) {
+    state.selectedTaskId = tasks[0]?.id || null;
   }
+
+  renderTaskList(tasks);
+  renderTaskDetail(tasks.find(task => task.id === state.selectedTaskId));
 }
 
-function renderTasks() {
-  const tasks = filterTasks();
-  els.taskGrid.innerHTML = '';
-
-  els.resultsMeta.textContent = tasks.length === 1
-    ? 'Showing 1 matching task. Open the card, use the task links, then copy the prompt if helpful.'
-    : `Showing ${tasks.length} matching tasks. Pick the card that matches your lane and open only what you need.`;
+function renderTaskList(tasks) {
+  els.taskList.innerHTML = '';
 
   if (!tasks.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.textContent = 'No matching tasks. Try searching a person, tool, folder, or project name.';
-    els.taskGrid.appendChild(empty);
+    els.taskList.innerHTML = '<div class="empty-state">No matching tasks. Try a different person, department, or search term.</div>';
     return;
   }
 
   tasks.forEach(task => {
-    const node = els.taskTemplate.content.cloneNode(true);
-
-    node.querySelector('.category').textContent = task.category;
-    node.querySelector('.status').textContent = task.status;
-    node.querySelector('h3').textContent = task.title;
-    node.querySelector('.context').textContent = task.context;
-    node.querySelector('.owner').textContent = task.owner;
-    node.querySelector('.support').textContent = task.support;
-    node.querySelector('.approves').textContent = task.approves;
-    node.querySelector('.due').textContent = task.due;
-    node.querySelector('.tool').textContent = task.tool;
-    node.querySelector('.save').textContent = task.saveFinalIn;
-    node.querySelector('.deliverable').textContent = task.deliverable;
-    node.querySelector('.prompt').textContent = task.prompt;
-
-    const nextSteps = node.querySelector('.next-steps');
-    (task.nextSteps || []).forEach(step => {
-      const li = document.createElement('li');
-      li.textContent = step;
-      nextSteps.appendChild(li);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `task-row ${task.id === state.selectedTaskId ? 'is-selected' : ''}`;
+    button.innerHTML = `
+      <span class="task-row-title">${escapeHtml(task.title)}</span>
+      <span class="task-row-meta">${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)} · ${escapeHtml(task.owner)}</span>
+    `;
+    button.addEventListener('click', () => {
+      state.selectedTaskId = task.id;
+      render();
+      if (window.matchMedia('(max-width: 820px)').matches) {
+        els.taskDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
+    els.taskList.appendChild(button);
+  });
+}
 
-    const links = node.querySelector('.links');
-    (task.links || []).forEach(linkId => {
-      const resource = state.resourceMap.get(linkId);
-      if (!resource) return;
-      const a = document.createElement('a');
-      a.href = resource.url;
-      a.target = '_blank';
-      a.rel = 'noreferrer';
-      a.textContent = resource.label;
-      a.title = resource.useWhen;
-      links.appendChild(a);
-    });
+function renderTaskDetail(task) {
+  if (!task) {
+    els.taskDetail.innerHTML = '<div class="empty-state">Choose a task to see the details.</div>';
+    return;
+  }
 
-    const copyButton = node.querySelector('.copy-button');
-    copyButton.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(task.prompt);
-      copyButton.textContent = 'Copied';
-      setTimeout(() => { copyButton.textContent = 'Copy prompt'; }, 1200);
-    });
+  const links = (task.links || [])
+    .map(linkId => state.resourceMap.get(linkId))
+    .filter(Boolean)
+    .map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`)
+    .join('');
 
-    els.taskGrid.appendChild(node);
+  const steps = (task.nextSteps || [])
+    .map(step => `<li>${escapeHtml(step)}</li>`)
+    .join('');
+
+  els.taskDetail.innerHTML = `
+    <article class="detail-card">
+      <div class="card-topline">
+        <span class="badge category">${escapeHtml(task.department || task.category)}</span>
+        <span class="badge status">${escapeHtml(task.status)}</span>
+      </div>
+      <h2>${escapeHtml(task.title)}</h2>
+      <p class="context">${escapeHtml(task.context)}</p>
+
+      <div class="next-action-block">
+        <strong>Deliverable</strong>
+        <p>${escapeHtml(task.deliverable)}</p>
+      </div>
+
+      <dl class="meta-grid">
+        <div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div>
+        <div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div>
+        <div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div>
+        <div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div>
+        <div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div>
+        <div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div>
+      </dl>
+
+      <div class="link-block">
+        <strong>Use these links</strong>
+        <div class="links">${links}</div>
+      </div>
+
+      <details open>
+        <summary>Steps to complete</summary>
+        <ol class="next-steps">${steps}</ol>
+      </details>
+      <details>
+        <summary>Prompt starter</summary>
+        <p class="prompt">${escapeHtml(task.prompt)}</p>
+        <button class="copy-button" type="button">Copy prompt</button>
+      </details>
+    </article>
+  `;
+
+  els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
+    await navigator.clipboard.writeText(task.prompt);
+    event.currentTarget.textContent = 'Copied';
+    setTimeout(() => { event.currentTarget.textContent = 'Copy prompt'; }, 1200);
   });
 }
 
@@ -202,19 +231,18 @@ function renderResources() {
   [...byCategory.entries()].sort().forEach(([category, resources]) => {
     const group = document.createElement('section');
     group.className = 'resource-group';
-    group.innerHTML = `<h3>${escapeHtml(category)}</h3>`;
+    group.innerHTML = `<h3>${escapeHtml(category)}</h3><div class="resource-cards"></div>`;
+    const cards = group.querySelector('.resource-cards');
 
     resources.forEach(resource => {
       const card = document.createElement('article');
       card.className = 'resource-card';
       card.innerHTML = `
-        <div>
-          <strong>${escapeHtml(resource.label)}</strong>
-          <p>${escapeHtml(resource.useWhen)}</p>
-        </div>
+        <strong>${escapeHtml(resource.label)}</strong>
+        <p>${escapeHtml(resource.useWhen)}</p>
         <a href="${resource.url}" target="_blank" rel="noreferrer">Open</a>
       `;
-      group.appendChild(card);
+      cards.appendChild(card);
     });
 
     els.resourceGrid.appendChild(group);
@@ -223,7 +251,7 @@ function renderResources() {
 
 function setFilter(key, value) {
   state.filters[key] = value;
-  renderTasks();
+  render();
 }
 
 function escapeHtml(text) {
@@ -236,14 +264,12 @@ function escapeHtml(text) {
 }
 
 els.searchInput.addEventListener('input', event => setFilter('search', event.target.value));
-els.categoryFilter.addEventListener('change', event => setFilter('category', event.target.value));
-els.toolFilter.addEventListener('change', event => setFilter('tool', event.target.value));
-els.statusFilter.addEventListener('change', event => setFilter('status', event.target.value));
-els.ownerFilter.addEventListener('change', event => setFilter('owner', event.target.value));
-els.sortSelect.addEventListener('change', event => setFilter('sort', event.target.value));
+els.personFilter.addEventListener('change', event => setFilter('person', event.target.value));
+els.departmentFilter.addEventListener('change', event => setFilter('department', event.target.value));
 
 loadData().catch(error => {
-  els.taskGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+  els.taskList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+  els.taskDetail.innerHTML = '';
   if (els.resultsMeta) els.resultsMeta.textContent = 'Could not load tasks.';
   console.error(error);
 });
