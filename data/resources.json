@@ -24,6 +24,22 @@
     "useWhen": "Use to create structured DSG briefs, internal updates, task summaries, and review-ready team communications."
   },
   {
+    "id": "dsg-instagram",
+    "label": "DSG Instagram",
+    "category": "Brand",
+    "tool": "Instagram",
+    "url": "https://www.instagram.com/discoverysoundgarden/",
+    "useWhen": "Use for public-facing social reference, brand presence, campaign review, and Instagram content checks."
+  },
+  {
+    "id": "dsg-linkedin",
+    "label": "DSG LinkedIn",
+    "category": "Brand",
+    "tool": "LinkedIn",
+    "url": "https://www.linkedin.com/company/discovery-sound-garden/",
+    "useWhen": "Use for public-facing organizational reference, partner/funder credibility, and LinkedIn content checks."
+  },
+  {
     "id": "dsg-share-folder",
     "label": "DSG Share Folder",
     "category": "Drive",
