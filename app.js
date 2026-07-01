@@ -7,7 +7,7 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-completion-flow';
+const dataVersion = '20260701-step-complete';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 
@@ -198,13 +198,13 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><section class="completion-review"><h3>Completion review</h3><p>Use this when the work is finished. It sends evidence to Andrew for Cockpit review; the task is not fully complete until both verification steps are confirmed.</p><form class="completion-form" data-task-id="${escapeHtml(task.id)}"><label>Completion evidence<textarea name="Completion evidence" rows="3" placeholder="Paste the deliverable link, saved-file location, receipt, screenshot note, or closure evidence." required></textarea></label><div class="completion-fields"><label>Verification 1 reviewer<input name="Verification 1 reviewer" type="text" placeholder="Who confirms the work product?" required></label><label>Verification 2 reviewer<input name="Verification 2 reviewer" type="text" placeholder="Who approves closure?" required></label></div><button type="submit">Send completion review</button><p class="completion-status" role="status" aria-live="polite"></p></form></section><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. If the task needs to change, use the suggestion form below; submissions go to Andrew by email, then accepted updates are recorded in Source Inbox/Cockpit before the Hub is refreshed.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. If the task needs to change, use the suggestion form below; submissions go to Andrew by email, then accepted updates are recorded in Source Inbox/Cockpit before the Hub is refreshed.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
     setTimeout(() => { event.currentTarget.textContent = 'Copy prompt'; }, 1200);
   });
-  els.taskDetail.querySelector('.completion-form').addEventListener('submit', event => handleCompletionSubmit(event, task));
+  els.taskDetail.querySelector('.step-complete-button').addEventListener('click', event => handleStepComplete(event, task));
 }
 
 function renderAndrewWork() {
@@ -251,13 +251,13 @@ function renderResources() {
   });
 }
 
-async function handleCompletionSubmit(event, task) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const status = form.querySelector('.completion-status');
-  const button = form.querySelector('button[type="submit"]');
-  const formData = new FormData(form);
-  formData.append('_subject', `DSG Hub completion review: ${task.title}`);
+async function handleStepComplete(event, task) {
+  const confirmed = window.confirm(`Mark this step complete for Andrew review?\n\n${task.title}`);
+  if (!confirmed) return;
+  const button = event.currentTarget;
+  const status = els.taskDetail.querySelector('.completion-status');
+  const formData = new FormData();
+  formData.append('_subject', `DSG Hub step complete: ${task.title}`);
   formData.append('_template', 'table');
   formData.append('_captcha', 'false');
   formData.append('Page', window.location.href);
@@ -266,9 +266,9 @@ async function handleCompletionSubmit(event, task) {
   formData.append('Owner', task.owner);
   formData.append('Approves', task.approves);
   formData.append('Save final in', task.saveFinalIn);
-  formData.append('Cockpit status requested', 'Completion review requested; do not mark Completed until evidence, Verification 1, and Verification 2 are confirmed.');
+  formData.append('Status requested', 'Step complete confirmation submitted from the Hub. Andrew should review before any Cockpit status change.');
 
-  status.textContent = 'Sending completion review...';
+  status.textContent = 'Sending step complete note...';
   button.disabled = true;
   try {
     const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', {
@@ -276,11 +276,10 @@ async function handleCompletionSubmit(event, task) {
       headers: { Accept: 'application/json' },
       body: formData
     });
-    if (!response.ok) throw new Error('Completion review failed');
-    form.reset();
-    status.textContent = 'Completion review emailed to Andrew for Cockpit verification.';
+    if (!response.ok) throw new Error('Step complete failed');
+    status.textContent = 'Step complete note sent to Andrew.';
   } catch (error) {
-    status.textContent = 'Could not send completion review. Please try again in a moment.';
+    status.textContent = 'Could not send. Please try again in a moment.';
   } finally {
     button.disabled = false;
   }
