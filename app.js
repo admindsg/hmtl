@@ -7,7 +7,7 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-cockpit-repull';
+const dataVersion = '20260701-cockpit-refresh-2';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 
