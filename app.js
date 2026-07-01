@@ -7,7 +7,7 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-approved-intake-cache';
+const dataVersion = '20260701-completion-flow';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 
@@ -21,23 +21,23 @@ const approvedIntakeTasks = [
     status: 'Needs Review',
     priority: 'High',
     owner: 'Andrew',
-    support: 'Admin support / Richard if rbaskin.dsg access is needed',
+    support: 'Andrew only',
     approves: 'Andrew',
     due: 'This week',
     tool: 'Gmail / Google Workspace Admin + account inventory + DSG GPT',
     audience: 'Internal admin',
-    deliverable: 'A reviewed plan for forwarding rbaskin.dsg email to admin@discoverysoundgarden.com, keeping it organized separately, and migrating account logins only where Andrew approves the change.',
+    deliverable: 'Andrew reviews forwarding from rbaskin.dsg to admin@discoverysoundgarden.com, keeps any forwarded mail organized separately, and migrates account logins only where he approves the change.',
     saveFinalIn: 'DSG Share Folder > Administration',
-    context: 'Hub intake suggested forwarding email from rbaskin.dsg to admin while keeping it separate, and updating account logins away from rbaskin.dsg. This touches access and security, so it needs review before any account changes.',
+    context: 'Hub intake suggested forwarding email from rbaskin.dsg to admin while keeping it separate, and updating account logins away from rbaskin.dsg. Andrew is the only person assigned to touch or approve this access-sensitive task.',
     nextSteps: [
-      'Inventory which accounts still use rbaskin.dsg and whether each account should move to admin@discoverysoundgarden.com.',
-      'Confirm who controls rbaskin.dsg access and whether forwarding is appropriate.',
-      'Set an organization rule for labeling or separating forwarded mail before enabling forwarding.',
-      'Do not change passwords, ownership, recovery settings, or forwarding rules without Andrew approval.',
-      'Save only a status note and approved migration list; do not put credentials in the Hub or Cockpit.'
+      'Andrew inventories which accounts still use rbaskin.dsg and whether each account should move to admin@discoverysoundgarden.com.',
+      'Andrew decides whether forwarding is appropriate and how forwarded mail should be labeled or separated.',
+      'Andrew does not change passwords, ownership, recovery settings, or forwarding rules until he has chosen the exact account-by-account plan.',
+      'Save only a status note and approved migration list; do not put credentials in the Hub or Cockpit.',
+      'Keep this task Andrew-only unless Andrew explicitly assigns a support person later.'
     ],
     links: ['dsg-share-folder', 'dsg-gpt', 'dsg-brief-builder'],
-    prompt: 'In DSG GPT, create a safe admin email and login migration checklist for DSG. Cover rbaskin.dsg forwarding, label/separation rules, account inventory, approval before login changes, credential safety, owner/support/approver, save location, and what evidence should be recorded without exposing private account details.'
+    prompt: 'In DSG GPT, create a safe admin email and login migration checklist for Andrew only. Cover rbaskin.dsg forwarding, label/separation rules, account inventory, approval before login changes, credential safety, save location, and what evidence should be recorded without exposing private account details.'
   },
   {
     id: 'task-omari-insurance-business-law-review',
@@ -198,12 +198,13 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. If the task needs to change, use the suggestion form below; submissions go to Andrew by email, then accepted updates are recorded in Source Inbox/Cockpit before the Hub is refreshed.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><section class="completion-review"><h3>Completion review</h3><p>Use this when the work is finished. It sends evidence to Andrew for Cockpit review; the task is not fully complete until both verification steps are confirmed.</p><form class="completion-form" data-task-id="${escapeHtml(task.id)}"><label>Completion evidence<textarea name="Completion evidence" rows="3" placeholder="Paste the deliverable link, saved-file location, receipt, screenshot note, or closure evidence." required></textarea></label><div class="completion-fields"><label>Verification 1 reviewer<input name="Verification 1 reviewer" type="text" placeholder="Who confirms the work product?" required></label><label>Verification 2 reviewer<input name="Verification 2 reviewer" type="text" placeholder="Who approves closure?" required></label></div><button type="submit">Send completion review</button><p class="completion-status" role="status" aria-live="polite"></p></form></section><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. If the task needs to change, use the suggestion form below; submissions go to Andrew by email, then accepted updates are recorded in Source Inbox/Cockpit before the Hub is refreshed.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
     setTimeout(() => { event.currentTarget.textContent = 'Copy prompt'; }, 1200);
   });
+  els.taskDetail.querySelector('.completion-form').addEventListener('submit', event => handleCompletionSubmit(event, task));
 }
 
 function renderAndrewWork() {
@@ -248,6 +249,41 @@ function renderResources() {
     });
     els.resourceGrid.appendChild(section);
   });
+}
+
+async function handleCompletionSubmit(event, task) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const status = form.querySelector('.completion-status');
+  const button = form.querySelector('button[type="submit"]');
+  const formData = new FormData(form);
+  formData.append('_subject', `DSG Hub completion review: ${task.title}`);
+  formData.append('_template', 'table');
+  formData.append('_captcha', 'false');
+  formData.append('Page', window.location.href);
+  formData.append('Task ID', task.id);
+  formData.append('Task title', task.title);
+  formData.append('Owner', task.owner);
+  formData.append('Approves', task.approves);
+  formData.append('Save final in', task.saveFinalIn);
+  formData.append('Cockpit status requested', 'Completion review requested; do not mark Completed until evidence, Verification 1, and Verification 2 are confirmed.');
+
+  status.textContent = 'Sending completion review...';
+  button.disabled = true;
+  try {
+    const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: formData
+    });
+    if (!response.ok) throw new Error('Completion review failed');
+    form.reset();
+    status.textContent = 'Completion review emailed to Andrew for Cockpit verification.';
+  } catch (error) {
+    status.textContent = 'Could not send completion review. Please try again in a moment.';
+  } finally {
+    button.disabled = false;
+  }
 }
 
 async function handleSuggestionSubmit(event) {
