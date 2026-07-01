@@ -16,6 +16,14 @@
     "useWhen": "Use before drafting public or team-facing communications. Contains DSG voice, tone, mission, colors, typography, positioning, and program identity."
   },
   {
+    "id": "dsg-brief-builder",
+    "label": "DSG Brief Builder",
+    "category": "Brand",
+    "tool": "ChatGPT",
+    "url": "https://chatgpt.com/g/g-6a4434b3d6908191aad23f759e9f7fbb-dsg-brief-builder",
+    "useWhen": "Use to create structured DSG briefs, internal updates, task summaries, and review-ready team communications."
+  },
+  {
     "id": "dsg-share-folder",
     "label": "DSG Share Folder",
     "category": "Drive",
