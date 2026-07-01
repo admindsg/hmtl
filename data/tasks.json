@@ -2,6 +2,7 @@
   {
     "id": "task-registrant-resolution",
     "title": "Resolve July Workshop Registrations",
+    "department": "Programming",
     "category": "Email",
     "project": "July Workshop",
     "status": "Ready to draft",
@@ -29,6 +30,7 @@
   {
     "id": "task-team-next-steps-brief",
     "title": "Send Team Next-Steps Brief",
+    "department": "Team Ops",
     "category": "Brief",
     "project": "Team Operations",
     "status": "Ready for review",
@@ -49,12 +51,13 @@
       "Add a short section summarizing what Andrew is carrying.",
       "Review for clarity before sending."
     ],
-    "links": ["dsg-gpt", "dsg-brand-kit", "dsg-share-folder"],
+    "links": ["dsg-gpt", "dsg-brand-kit", "dsg-share-folder", "complete-ai-bundle", "chatgpt-mega-prompt-bundle"],
     "prompt": "Create a DSG team next-steps brief using the simple writing-block format. Include every current task, and for each task include context, deliverable, owner, support, approves, due, next steps, and use-these-links. Keep it clear, calm, and actionable. Add a short bottom section summarizing what Andrew is carrying. Do not include a brand voice box. Use the DSG Brand Kit for tone."
   },
   {
     "id": "task-minutes-approval",
     "title": "Finalize June 29 Board Minutes",
+    "department": "Governance",
     "category": "Governance",
     "project": "Board Follow-Up",
     "status": "Needs review",
@@ -80,6 +83,7 @@
   {
     "id": "task-compliance-filing",
     "title": "Move Compliance Filing Forward",
+    "department": "Compliance",
     "category": "Compliance",
     "project": "Finance / Compliance",
     "status": "In progress",
@@ -105,6 +109,7 @@
   {
     "id": "task-role-clarity",
     "title": "Draft Role Clarity Materials",
+    "department": "Team Ops",
     "category": "Operations",
     "project": "Team Structure",
     "status": "Needs draft",
@@ -131,6 +136,7 @@
   {
     "id": "task-marketing-postmortem",
     "title": "Schedule Workshop Post-Mortem and Marketing Funnel Review",
+    "department": "Marketing",
     "category": "Marketing",
     "project": "July Workshop",
     "status": "Needs scheduling",
@@ -157,6 +163,7 @@
   {
     "id": "task-finance-admin-cleanup",
     "title": "Clean Up Finance and Admin Items",
+    "department": "Finance / Admin",
     "category": "Finance",
     "project": "Admin Cleanup",
     "status": "In progress",
@@ -183,6 +190,7 @@
   {
     "id": "task-funding-readiness",
     "title": "Stage Funding Readiness Materials",
+    "department": "Dev / Fund",
     "category": "Funding",
     "project": "Development",
     "status": "Needs staging",
