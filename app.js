@@ -4,51 +4,20 @@ const state = {
   resources: [],
   resourceMap: new Map(),
   selectedTaskId: null,
-  filters: {
-    search: '',
-    person: 'all',
-    department: 'all'
-  }
+  filters: { search: '', person: 'all', department: 'all' }
 };
 
-const priorityRank = { High: 1, Medium: 2, Low: 3 };
+const dataVersion = '20260701-cockpit-repull';
+const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 
 const resourceGroups = [
-  {
-    title: 'Brand, Voice & Briefs',
-    note: 'Use before anything public-facing or review-ready.',
-    resources: ['dsg-brand-kit', 'dsg-brief-builder', 'dsg-website', 'dsg-gpt']
-  },
-  {
-    title: 'Marketing & Social',
-    note: 'Social channels, scheduling, audience engagement, and campaign learning.',
-    resources: ['dsg-instagram', 'dsg-linkedin', 'meta-business-suite', 'buffer', 'manychat', 'canva', 'getting-in-on-the-act', 'barun-audience-engagement', 'youtube-experience-video']
-  },
-  {
-    title: 'Development & Funding',
-    note: 'Funding work, funder-facing language, and staged grant materials.',
-    resources: ['grants-folder', 'dsg-brand-kit', 'dsg-brief-builder', 'dsg-share-folder']
-  },
-  {
-    title: 'Programming & Registrants',
-    note: 'Workshop communication, participant follow-up, and program records.',
-    resources: ['zeffy', 'dsg-gpt', 'dsg-brand-kit', 'dsg-share-folder', 'getting-in-on-the-act']
-  },
-  {
-    title: 'Compliance, Finance & Admin',
-    note: 'Filing, receipts, finance cleanup, and administrative reference.',
-    resources: ['ny-charities', 'irs-nonprofits', 'stay-exempt', 'relay', 'dsg-share-folder']
-  },
-  {
-    title: 'AI Prompt Support',
-    note: 'Prompt examples and reusable AI workflow inspiration.',
-    resources: ['complete-ai-bundle', 'chatgpt-mega-prompt-bundle', 'dsg-gpt', 'dsg-brief-builder']
-  },
-  {
-    title: 'Experience Design & UX',
-    note: 'Useful when shaping audience journeys, hub structure, or workshop experience.',
-    resources: ['ux-design-process', 'hbr-new-experience-economy', 'experience-economy-wiki', 'hbr-welcome-experience-economy', 'participations-wlazel', 'getting-in-on-the-act']
-  }
+  { title: 'Brand, Voice & Briefs', note: 'Use before anything public-facing or review-ready.', resources: ['dsg-brand-kit', 'dsg-brief-builder', 'dsg-website', 'dsg-gpt'] },
+  { title: 'Marketing & Social', note: 'Social channels, scheduling, audience engagement, and campaign learning.', resources: ['dsg-instagram', 'dsg-linkedin', 'meta-business-suite', 'buffer', 'manychat', 'canva', 'getting-in-on-the-act', 'barun-audience-engagement', 'youtube-experience-video'] },
+  { title: 'Development & Funding', note: 'Funding work, funder-facing language, and staged grant materials.', resources: ['grants-folder', 'dsg-brand-kit', 'dsg-brief-builder', 'dsg-share-folder'] },
+  { title: 'Programming & Registrants', note: 'Workshop communication, participant follow-up, and program records.', resources: ['zeffy', 'dsg-gpt', 'dsg-brand-kit', 'dsg-share-folder', 'getting-in-on-the-act'] },
+  { title: 'Compliance, Finance & Admin', note: 'Filing, receipts, finance cleanup, and administrative reference.', resources: ['ny-charities', 'irs-nonprofits', 'stay-exempt', 'relay', 'dsg-share-folder'] },
+  { title: 'AI Prompt Support', note: 'Prompt examples and reusable AI workflow inspiration.', resources: ['complete-ai-bundle', 'chatgpt-mega-prompt-bundle', 'dsg-gpt', 'dsg-brief-builder'] },
+  { title: 'Experience Design & UX', note: 'Useful when shaping audience journeys, hub structure, or workshop experience.', resources: ['ux-design-process', 'hbr-new-experience-economy', 'experience-economy-wiki', 'hbr-welcome-experience-economy', 'participations-wlazel', 'getting-in-on-the-act'] }
 ];
 
 const els = {
@@ -65,21 +34,18 @@ const els = {
 
 async function loadData() {
   const [tasksResponse, resourcesResponse, meetingsResponse] = await Promise.all([
-    fetch('data/tasks.json'),
-    fetch('data/resources.json'),
-    fetch('data/meetings.json').catch(() => null)
+    fetch(`data/tasks.json?v=${dataVersion}`),
+    fetch(`data/resources.json?v=${dataVersion}`),
+    fetch(`data/meetings.json?v=${dataVersion}`).catch(() => null)
   ]);
-
   if (!tasksResponse.ok || !resourcesResponse.ok) {
     throw new Error('Could not load hub data. If previewing locally, serve the folder with a simple local web server.');
   }
-
   state.tasks = await tasksResponse.json();
   state.resources = await resourcesResponse.json();
   state.meetings = meetingsResponse && meetingsResponse.ok ? await meetingsResponse.json() : [];
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
   state.selectedTaskId = state.tasks[0]?.id || null;
-
   populateFilters();
   renderResources();
   renderAndrewWork();
@@ -107,6 +73,7 @@ function getPeople() {
 }
 
 function addOptions(select, values) {
+  select.querySelectorAll('option:not([value="all"])').forEach(option => option.remove());
   values.forEach(value => {
     const option = document.createElement('option');
     option.value = value;
@@ -125,7 +92,6 @@ function getSearchText(task) {
     .map(linkId => state.resourceMap.get(linkId))
     .filter(Boolean)
     .map(resource => `${resource.label} ${resource.category} ${resource.tool} ${resource.useWhen}`);
-
   return [task.title, task.department, task.category, task.project, task.status, task.priority, task.owner, task.support, task.approves, task.due, task.tool, task.audience, task.deliverable, task.saveFinalIn, task.context, task.prompt, ...(task.nextSteps || []), ...linkedResources].join(' ').toLowerCase();
 }
 
@@ -140,7 +106,7 @@ function filteredTasks() {
     .filter(task => !query || getSearchText(task).includes(query))
     .filter(task => state.filters.department === 'all' || (task.department || task.category) === state.filters.department)
     .filter(task => personMatches(task, state.filters.person))
-    .sort((a, b) => (priorityRank[a.priority] || 99) - (priorityRank[b.priority] || 99) || a.title.localeCompare(b.title));
+    .sort((a, b) => (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99) || a.title.localeCompare(b.title));
 }
 
 function render() {
@@ -187,7 +153,7 @@ function renderTaskDetail(task) {
 }
 
 function renderAndrewWork() {
-  const andrewTasks = state.tasks.filter(task => personMatches(task, 'Andrew')).sort((a, b) => (priorityRank[a.priority] || 99) - (priorityRank[b.priority] || 99) || a.title.localeCompare(b.title));
+  const andrewTasks = state.tasks.filter(task => personMatches(task, 'Andrew')).sort((a, b) => (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99) || a.title.localeCompare(b.title));
   if (!els.andrewWork) return;
   els.andrewWork.innerHTML = andrewTasks.map(task => `<button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)}</span></button>`).join('');
   els.andrewWork.querySelectorAll('[data-task-id]').forEach(button => {
