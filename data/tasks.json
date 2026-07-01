@@ -1,5 +1,32 @@
 [
   {
+    "id": "task-richard-workshop-rework-meeting",
+    "title": "Schedule Richard Workshop Rework Meeting",
+    "department": "Programming",
+    "category": "Registrant Care",
+    "project": "July Workshop Cancellation Cleanup",
+    "status": "Waiting",
+    "priority": "Urgent",
+    "owner": "Andrew / Richard",
+    "support": "Monae",
+    "approves": "Andrew",
+    "due": "This week, morning before 10am",
+    "tool": "Google Calendar + Richard Meeting Prep + email",
+    "audience": "Internal",
+    "deliverable": "Richard confirms prep time, Andrew and Richard choose a morning before 10am, meeting link/time are set, and the existing agenda is used for participant-care decisions.",
+    "saveFinalIn": "DSG Share Folder > Programming > Workshop Email Communication",
+    "context": "Cockpit refresh shows the Richard agenda prep is complete and archived, but scheduling is still waiting. Richard will name a morning this week before 10am after estimating prep time.",
+    "nextSteps": [
+      "Hold the Richard scheduling thread until he confirms prep time.",
+      "Choose a morning this week before 10am.",
+      "Attach or reference the Richard Meeting Prep agenda.",
+      "Use the meeting to settle registrant-care options, communication flow, and DSG story alignment.",
+      "Keep participant PII and credentials out of the Hub and cockpit."
+    ],
+    "links": ["dsg-share-folder", "dsg-gpt", "dsg-brief-builder", "zeffy"],
+    "prompt": "Create a short meeting-prep note for Andrew and Richard. Use the existing Richard Meeting Prep agenda. Focus on participant-care decisions, refund/transfer/1-on-1 options, communication flow, DSG story alignment, and what must be decided before registrants are contacted. Keep it internal, concise, and PII-safe."
+  },
+  {
     "id": "task-website-workshop-copy-cleanup",
     "title": "Fix Website Workshop Copy and Current CTA",
     "department": "Marketing & Social",
@@ -15,7 +42,7 @@
     "audience": "Public / registrants / future participants",
     "deliverable": "Workshop page no longer promotes July 6-11 group workshops as available; current status, registrant-support path, and future-interest CTA are accurate.",
     "saveFinalIn": "DSG Share Folder > Marketing & Brand",
-    "context": "The current operating picture shifted from promotion to cancellation/pivot cleanup. The public site is one of the most visible cleanup surfaces and has not been independently verified by the agent.",
+    "context": "The Cockpit still treats public website cleanup as one of the top blockers. Current website state has not been independently verified by the agent.",
     "nextSteps": [
       "Open the website editor and identify any stale July 6-11 group workshop copy.",
       "Replace unavailable registration language with current status and a future-interest or registrant-support path.",
@@ -23,7 +50,7 @@
       "Have Andrew approve exact public wording before publishing."
     ],
     "links": ["dsg-website", "dsg-brand-kit", "dsg-brief-builder", "dsg-gpt", "dsg-share-folder"],
-    "prompt": "Create DSG website replacement copy for the July workshop page. The page should no longer promote July 6-11 group workshops as available. Write a warm, clear, accurate current-status note, a registrant-support path, and a future-interest CTA. Do not announce future dates. Keep the tone grounded, professional, and not overly dramatic. Return short web copy options and a review checklist."
+    "prompt": "Create DSG website replacement copy for the July workshop page. The page should no longer promote July 6-11 group workshops as available. Write a warm, clear, accurate current-status note, a registrant-support path, and a future-interest CTA. Do not announce future dates. Return short web copy options and a review checklist."
   },
   {
     "id": "task-zeffy-event-registrant-cleanup",
@@ -41,7 +68,7 @@
     "audience": "Registrants / internal records",
     "deliverable": "Zeffy event and registration state checked, ticket sales paused/hidden/canceled as appropriate, attendee notes updated, and refund/transfer/1-on-1 handling documented without PII in the cockpit.",
     "saveFinalIn": "DSG Share Folder > Programming > Workshop Email Communication",
-    "context": "Zeffy is the exact participant record source. The workbook repeatedly flags that the public event state and attendee notes have not been verified.",
+    "context": "Zeffy remains the exact participant record source. The Cockpit flags registration/event state and attendee notes as needing verification before registrant care can close.",
     "nextSteps": [
       "Open the Zeffy event and confirm whether registration is still public or active.",
       "Pause, hide, or cancel stale registration as appropriate after Andrew confirms boundaries.",
@@ -76,7 +103,7 @@
       "Track each response and selected option outside the public Hub."
     ],
     "links": ["zeffy", "dsg-gpt", "dsg-brief-builder", "dsg-brand-kit", "dsg-share-folder"],
-    "prompt": "Create a DSG registrant-care email packet for current July workshop registrants. The message should be warm, honest, grounded, direct, and clear. Offer refund, transfer, or 1-on-1 alternative. Do not write a broad public cancellation announcement. Return plain text copy, branded HTML, subject line, preview text, review checklist, and response-tracking notes."
+    "prompt": "Create a DSG registrant-care email packet for current July workshop registrants. The message should be warm, honest, grounded, direct, and clear. Offer refund, transfer, or 1-on-1 alternative. Do not write a broad public cancellation announcement. Return plain text copy, subject line, preview text, review checklist, and response-tracking notes."
   },
   {
     "id": "task-social-listing-cleanup",
@@ -94,7 +121,7 @@
     "audience": "Public / social followers / listing audiences",
     "deliverable": "Scheduled posts, public listings, Facebook/Page language, and community calendar copy are stopped, corrected, withdrawn, or clearly updated.",
     "saveFinalIn": "DSG Share Folder > Marketing & Brand",
-    "context": "The workbook flags stale July 6-11 promo risk across Buffer, Facebook, Eventbrite, and community listings. Buffer recap still contained promo language, and listing state is not independently verified.",
+    "context": "The Cockpit flags stale July 6-11 promo risk across Buffer, Facebook, Eventbrite, and community listings. Listing state is not independently verified.",
     "nextSteps": [
       "Audit Buffer scheduled and recent posts.",
       "Check Meta/Facebook Page and Instagram references.",
@@ -104,6 +131,32 @@
     ],
     "links": ["buffer", "meta-business-suite", "dsg-instagram", "dsg-linkedin", "canva", "dsg-brand-kit", "getting-in-on-the-act", "barun-audience-engagement"],
     "prompt": "Create a DSG stale-public-copy audit checklist for Buffer, social channels, Facebook Page, Eventbrite, and community listings. Include what to check, what to stop or correct, what needs Andrew approval, and a public-claims rule. Keep it practical and suitable for delegated marketing support."
+  },
+  {
+    "id": "task-facebook-page-omari-check",
+    "title": "Update Facebook Page With Omari Check",
+    "department": "Marketing & Social",
+    "category": "Facebook Page",
+    "project": "July Workshop Cancellation Cleanup",
+    "status": "Not Started",
+    "priority": "High",
+    "owner": "Andrew / Omari",
+    "support": "Marketing support",
+    "approves": "Andrew",
+    "due": "This week",
+    "tool": "Facebook Page + Meta Business Suite",
+    "audience": "Public / Facebook visitors",
+    "deliverable": "Facebook Page profile/about/current workshop status checked, and Omari confirms any page/admin changes or updates needed.",
+    "saveFinalIn": "DSG Share Folder > Marketing & Brand",
+    "context": "Andrew Needs/Requests and the Social Media Workflow both call out Facebook Page status/admin verification with Omari.",
+    "nextSteps": [
+      "Ask Omari what needs to change or who has page/admin access.",
+      "Check whether any July workshop language is stale.",
+      "Prepare exact update copy for Andrew approval.",
+      "Save a short note or screenshot confirming the final page state."
+    ],
+    "links": ["meta-business-suite", "dsg-brand-kit", "dsg-share-folder"],
+    "prompt": "Create a short Facebook Page audit checklist for DSG. Include page/about copy, current July workshop status, admin/access questions for Omari, exact-update-copy review, proof to save, and public-claims guardrails."
   },
   {
     "id": "task-ad-spend-proof-receipts",
@@ -121,7 +174,7 @@
     "audience": "Internal / finance / post-mortem",
     "deliverable": "Campaigns confirmed off with screenshot/export, final spend saved, four Facebook receipts handled, and learning notes captured for post-mortem.",
     "saveFinalIn": "DSG Share Folder > Finance",
-    "context": "Ads stopped is self-reported in the workbook, but final platform proof/export and spend evidence are missing. Four Relay Facebook receipt reminders are tracked.",
+    "context": "Ads stopped is self-reported in the Cockpit, but final platform proof/export and spend evidence are missing. Four Relay Facebook receipt reminders are tracked.",
     "nextSteps": [
       "Confirm Meta/Google campaigns are fully stopped.",
       "Save screenshot or export of final campaign status and spend.",
@@ -148,7 +201,7 @@
     "audience": "Internal finance",
     "deliverable": "Zeffy June revenue/payouts matched to Relay deposits, and cancellation/refund/transfer exposure documented safely.",
     "saveFinalIn": "DSG Share Folder > Finance",
-    "context": "The workbook flags $100 raised/payouts in the June Zeffy report and at least one $20 purchase/payout that needs reconciliation against the cancellation plan.",
+    "context": "The Cockpit flags $100 raised/payouts in the June Zeffy report and at least one $20 purchase/payout that needs reconciliation against the cancellation plan.",
     "nextSteps": [
       "Compare Zeffy June report with Relay deposits.",
       "Document refund, transfer, or 1-on-1 exposure without participant PII.",
@@ -157,6 +210,32 @@
     ],
     "links": ["zeffy", "relay", "dsg-share-folder", "dsg-brief-builder"],
     "prompt": "Create a DSG Zeffy/Relay reconciliation checklist. Include June revenue, payouts, Relay deposits, refund/transfer exposure, privacy limits, owner/support/approver, due date, save location, and blocker note format."
+  },
+  {
+    "id": "task-google-security-alert",
+    "title": "Verify Google Admin Security Alert",
+    "department": "Operations / Technology",
+    "category": "Security / Admin",
+    "project": "Admin Continuity",
+    "status": "Needs Review",
+    "priority": "High",
+    "owner": "Andrew / Admin",
+    "support": "Trusted admin support if needed",
+    "approves": "Andrew",
+    "due": "Immediate",
+    "tool": "Google Account security activity",
+    "audience": "Internal admin",
+    "deliverable": "July 1 Windows sign-in alert verified as expected or escalated; if unexpected, account is secured and access reviewed.",
+    "saveFinalIn": "DSG Leadership Cockpit > Follow-Ups",
+    "context": "The Cockpit Source Inbox records a July 1 Google security alert for admin@discoverysoundgarden.com. Security details should stay out of public/task surfaces.",
+    "nextSteps": [
+      "Check Google account activity directly from the admin account.",
+      "Confirm whether the Windows sign-in was expected.",
+      "If unexpected, secure the account before further admin work.",
+      "Record only a brief resolved/escalated status, not private security details."
+    ],
+    "links": ["dsg-share-folder"],
+    "prompt": "Create a brief DSG admin security check note. Include how to verify the July 1 Google sign-in alert, what to record if expected, what to do if unexpected, and what details should not be copied into the cockpit or Hub."
   },
   {
     "id": "task-raffle-amazon-winner-proof",
@@ -174,7 +253,7 @@
     "audience": "Winner / public social audience",
     "deliverable": "$50 Amazon card purchase/send proof saved, winner confirmation handled, and raffle winner post scheduled or published with approved team-safe language.",
     "saveFinalIn": "DSG Share Folder > Marketing & Brand",
-    "context": "The workbook repeatedly warns not to mark the raffle/card tasks complete without purchase, send, and post evidence. Caption feedback and publish proof are still outstanding.",
+    "context": "The Cockpit repeatedly warns not to mark the raffle/card tasks complete without purchase, send, and post evidence. Caption feedback and publish proof are still outstanding.",
     "nextSteps": [
       "Confirm whether the $50 Amazon card was purchased.",
       "Save receipt or order confirmation.",
@@ -228,7 +307,7 @@
     "audience": "Internal",
     "deliverable": "Builder options compared for Google/Meta tracking, quiz/assessment funnel support, maintainability, cost, and migration effort.",
     "saveFinalIn": "DSG Share Folder > Marketing & Brand",
-    "context": "Gamma is the active site builder/subscription, but the workbook flags future tracking and quiz/assessment funnel needs before the next campaign.",
+    "context": "Gamma is the active site builder/subscription, but the Cockpit flags future tracking and quiz/assessment funnel needs before the next campaign.",
     "nextSteps": [
       "Document current Gamma limitations and strengths.",
       "Compare alternative builders against tracking, quiz funnel, maintainability, cost, and migration effort.",
@@ -254,7 +333,7 @@
     "audience": "Board / internal records",
     "deliverable": "NY Charities filing/payment status, ST-119.2 authority clarity, compliance calendar review/vote, and June 29 minutes approval path are all moving with clear owners.",
     "saveFinalIn": "DSG Share Folder > Finance and Meetings > Minutes",
-    "context": "The workbook shows several related compliance/governance items: NY Charities payment authorized, ST-119.2 authority unclear, compliance calendar not adopted, and board minutes still draft.",
+    "context": "The Cockpit shows several related compliance/governance items: NY Charities payment authorized, ST-119.2 authority unclear, compliance calendar not adopted, and board minutes still draft.",
     "nextSteps": [
       "Retry NY Charities portal and save receipt or blocker note.",
       "Confirm ST-119.2 filing authority before preparing submission.",
@@ -281,7 +360,7 @@
     "audience": "Internal team / board",
     "deliverable": "Draft role descriptions, decision trees, and master org chart ready for Andrew review.",
     "saveFinalIn": "DSG Share Folder > Leadership & Strategy",
-    "context": "The cockpit and accountability materials point away from heavier tooling first and toward clear roles, decision lanes, and operating rhythms.",
+    "context": "The Cockpit and accountability materials point away from heavier tooling first and toward clear roles, decision lanes, and operating rhythms.",
     "nextSteps": [
       "Draft role descriptions.",
       "Draft decision trees and decision-rights guardrails.",
@@ -335,7 +414,7 @@
     "audience": "Internal / funders after approval",
     "deliverable": "IRS letter, budget, program description, impact metrics, equity narrative, concept note, CitizensNYC/NYCT fit notes, and approval flags staged in the funding folder.",
     "saveFinalIn": "DSG Share Folder > Development & Fundraising",
-    "context": "Funding leads are active, but the workbook says they should not displace urgent cancellation, registrant, compliance, and finance cleanup. Sensitive identity/sponsor-benefit language needs approval before external use.",
+    "context": "Funding leads are active, but the Cockpit says they should not displace urgent cancellation, registrant, compliance, and finance cleanup. Sensitive identity/sponsor-benefit language needs approval before external use.",
     "nextSteps": [
       "Stage IRS letter, budget, program description, and metrics.",
       "Prepare equity narrative and concept note as internal drafts.",
@@ -345,6 +424,32 @@
     ],
     "links": ["grants-folder", "dsg-brand-kit", "dsg-share-folder", "dsg-gpt", "dsg-brief-builder"],
     "prompt": "Create a DSG funding readiness brief that stays below urgent cancellation cleanup. Include staged materials, CitizensNYC July 27 note, NYCT fit notes, owner/support/approver, sensitive-language review, save location, and a clear rule not to use identity or sponsor-benefit language externally without approval."
+  },
+  {
+    "id": "task-funding-report-automation",
+    "title": "Review Funding Report Automation Notice",
+    "department": "Development / Fundraising",
+    "category": "Funding Operations",
+    "project": "Funding Readiness",
+    "status": "Needs Review",
+    "priority": "Medium",
+    "owner": "Andrew / Agent",
+    "support": "Admin support if needed",
+    "approves": "Andrew",
+    "due": "This week",
+    "tool": "ChatGPT scheduled task + DSG Weekly Funding Report",
+    "audience": "Internal",
+    "deliverable": "Scheduled-task attention notice reviewed, future cadence/delivery confirmed, and June 30 funding report remains easy to find.",
+    "saveFinalIn": "DSG Leadership Cockpit > Automation Control",
+    "context": "The Cockpit says a June 30 weekly funding report exists, but a task-update notice said the scheduled funding report needs attention.",
+    "nextSteps": [
+      "Open the scheduled-task attention notice or schedule settings.",
+      "Confirm whether the next run and delivery cadence are healthy.",
+      "Keep the June 30 funding report linked for review.",
+      "Do not pursue NYSCA, NEA, or identity-sensitive grant language without leadership approval."
+    ],
+    "links": ["grants-folder", "dsg-share-folder", "dsg-brief-builder"],
+    "prompt": "Create a short DSG funding automation check. Confirm whether the scheduled funding report task needs attention, whether the June 30 report is available, what the next cadence should be, and what grant decisions require Andrew or board approval before action."
   },
   {
     "id": "task-parking-lot-review-triggers",
@@ -362,7 +467,7 @@
     "audience": "Internal",
     "deliverable": "Arts service orgs, live band open mics, musical sing-thru nights, busking workshop, artist resource page, work-study pathway, and future workshop relaunch stay parked with clear review triggers.",
     "saveFinalIn": "DSG Leadership Cockpit > Parking Lot",
-    "context": "The workbook intentionally parks good future ideas so they do not compete with the urgent public cleanup and registrant-care firebreak.",
+    "context": "The Cockpit intentionally parks good future ideas so they do not compete with the urgent public cleanup and registrant-care firebreak.",
     "nextSteps": [
       "Keep future ideas visible but not active.",
       "Attach each item to a review trigger.",
