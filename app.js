@@ -9,6 +9,7 @@ const state = {
 
 const dataVersion = '20260701-cockpit-repull';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
+const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 
 const resourceGroups = [
   { title: 'Brand, Voice & Briefs', note: 'Use before anything public-facing or review-ready.', resources: ['dsg-brand-kit', 'dsg-brief-builder', 'dsg-website', 'dsg-gpt'] },
@@ -33,7 +34,9 @@ const els = {
   meetingsList: document.querySelector('#meetingsList'),
   suggestTaskForm: document.querySelector('#suggestTaskForm'),
   taskSuggestion: document.querySelector('#taskSuggestion'),
-  suggestionStatus: document.querySelector('#suggestionStatus')
+  suggestionPage: document.querySelector('#suggestionPage'),
+  suggestionStatus: document.querySelector('#suggestionStatus'),
+  suggestionSubmit: document.querySelector('#suggestTaskForm button[type="submit"]')
 };
 
 async function loadData() {
@@ -58,22 +61,12 @@ async function loadData() {
 }
 
 function splitPeople(value) {
-  return String(value || '')
-    .replace(/\bif\b.*$/i, '')
-    .replace(/Board Secretary/gi, '')
-    .split(/\/|,|&| and | for |\//i)
-    .map(name => name.trim())
-    .filter(Boolean)
-    .map(name => name.replace(/\s+support$/i, '').trim())
-    .filter(name => !['Board', 'Admin support', 'Marketing support', 'delegated researcher'].includes(name));
+  const source = String(value || '');
+  return teamMembers.filter(person => new RegExp(`\\b${person}\\b`, 'i').test(source));
 }
 
 function getPeople() {
-  const people = new Set();
-  state.tasks.forEach(task => {
-    [...splitPeople(task.owner), ...splitPeople(task.support), ...splitPeople(task.approves)].forEach(person => people.add(person));
-  });
-  return [...people].sort();
+  return teamMembers.filter(person => state.tasks.some(task => personMatches(task, person)));
 }
 
 function addOptions(select, values) {
@@ -200,24 +193,32 @@ function renderResources() {
   });
 }
 
-function handleSuggestionSubmit(event) {
+async function handleSuggestionSubmit(event) {
   event.preventDefault();
   const suggestion = els.taskSuggestion.value.trim();
   if (!suggestion) {
     els.suggestionStatus.textContent = 'Add a task note first.';
     return;
   }
-  const subject = 'DSG Hub task suggestion';
-  const body = [
-    'Task suggestion:',
-    suggestion,
-    '',
-    'Suggested from the DSG Communications Hub.',
-    `Page: ${window.location.href}`
-  ].join('\n');
-  const mailto = `mailto:admin@discoverysoundgarden.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.location.href = mailto;
-  els.suggestionStatus.textContent = 'Opening an email to Andrew.';
+
+  if (els.suggestionPage) els.suggestionPage.value = window.location.href;
+  els.suggestionStatus.textContent = 'Submitting suggestion...';
+  if (els.suggestionSubmit) els.suggestionSubmit.disabled = true;
+
+  try {
+    const response = await fetch(els.suggestTaskForm.action, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: new FormData(els.suggestTaskForm)
+    });
+    if (!response.ok) throw new Error('Submission failed');
+    els.suggestTaskForm.reset();
+    els.suggestionStatus.textContent = 'Suggestion submitted for Andrew review.';
+  } catch (error) {
+    els.suggestionStatus.textContent = 'Could not submit. Please try again in a moment.';
+  } finally {
+    if (els.suggestionSubmit) els.suggestionSubmit.disabled = false;
+  }
 }
 
 function setFilter(key, value) {
