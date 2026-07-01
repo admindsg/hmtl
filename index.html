@@ -8,89 +8,89 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="eyebrow">Discovery Sound Garden</div>
-    <h1>Communications Hub Prototype</h1>
-    <p class="lede">Searchable workflows, prompts, links, owners, support roles, approvals, and deliverables for DSG communications and next-step tasks.</p>
-    <div class="header-actions">
-      <a class="button secondary" href="https://drive.google.com/drive/folders/1i8yx3UiUd85OW7equ5bGluUMIJllX_B1" target="_blank" rel="noreferrer">Open Share Folder</a>
-      <a class="button" href="https://chatgpt.com/g/g-XasGnTpjx-dsg-gpt" target="_blank" rel="noreferrer">Open DSG GPT</a>
+    <div class="header-inner">
+      <div class="eyebrow">Discovery Sound Garden</div>
+      <h1>Find your marching orders.</h1>
+      <p class="lede">Pick your lane, open the task, use the right links, copy the prompt, and move the work forward.</p>
+      <div class="header-actions">
+        <a class="button secondary" href="https://docs.google.com/document/d/1gDlTZHeX_KPWyOzzKfEwM41gIgzBMZjXakvno6OH2a0" target="_blank" rel="noreferrer">Brand Kit</a>
+        <a class="button secondary" href="https://drive.google.com/drive/folders/1i8yx3UiUd85OW7equ5bGluUMIJllX_B1" target="_blank" rel="noreferrer">Share Folder</a>
+        <a class="button" href="https://chatgpt.com/g/g-XasGnTpjx-dsg-gpt" target="_blank" rel="noreferrer">Open DSG GPT</a>
+      </div>
     </div>
   </header>
 
   <main>
-    <section class="panel intro-panel" aria-labelledby="how-this-works">
+    <section class="focus-panel" aria-labelledby="start-here">
       <div>
-        <h2 id="how-this-works">How this helps</h2>
-        <p>The cockpit can stay detailed. This hub turns the work into clear task cards: what to do, who owns it, who supports, who approves, where final work goes, and which links to use first.</p>
+        <div class="eyebrow dark">Start here</div>
+        <h2 id="start-here">What do you need to move forward?</h2>
+        <p>Use search when you know the task. Use “My lane” when you want to find work connected to a person or role. Filters are tucked away so the first screen stays calm.</p>
       </div>
-      <div class="role-grid">
-        <div><strong>Owner</strong><span>Moves the task forward and names blockers.</span></div>
-        <div><strong>Support</strong><span>Checks in with the owner and helps them succeed.</span></div>
-        <div><strong>Approves</strong><span>Reviews the final communication, file, or decision.</span></div>
-      </div>
-    </section>
-
-    <section class="toolbar panel" aria-label="Search and filters">
-      <label class="search-label" for="searchInput">Search tasks</label>
-      <input id="searchInput" type="search" placeholder="Search by task, owner, tool, folder, deliverable, or prompt..." />
-
-      <div class="controls">
-        <label>
-          Category
-          <select id="categoryFilter"><option value="all">All categories</option></select>
-        </label>
-        <label>
-          Tool
-          <select id="toolFilter"><option value="all">All tools</option></select>
-        </label>
-        <label>
-          Status
-          <select id="statusFilter"><option value="all">All statuses</option></select>
-        </label>
-        <label>
-          Owner
-          <select id="ownerFilter"><option value="all">All owners</option></select>
-        </label>
-        <label>
-          Sort
-          <select id="sortSelect">
-            <option value="priority">Priority</option>
-            <option value="due">Due date / timing</option>
-            <option value="title">Title</option>
-            <option value="status">Status</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="quick-filters" id="quickFilters" aria-label="Quick filters">
-        <button data-filter="Email">Email</button>
-        <button data-filter="Brief">Brief</button>
-        <button data-filter="Compliance">Compliance</button>
-        <button data-filter="Funding">Funding</button>
-        <button data-filter="Marketing">Marketing</button>
-        <button data-filter="Finance">Finance</button>
+      <div class="role-cards">
+        <div><strong>Owner</strong><span>Move the task forward.</span></div>
+        <div><strong>Support</strong><span>Check in and help the owner succeed.</span></div>
+        <div><strong>Approves</strong><span>Review the final before it moves.</span></div>
       </div>
     </section>
 
-    <section class="summary-strip" aria-label="Task summary">
-      <div><strong id="taskCount">0</strong><span>tasks shown</span></div>
-      <div><strong id="highCount">0</strong><span>high priority</span></div>
-      <div><strong id="reviewCount">0</strong><span>need review</span></div>
-      <div><strong id="resourceCount">0</strong><span>shared links</span></div>
-    </section>
-
-    <section id="taskGrid" class="task-grid" aria-live="polite"></section>
-
-    <section class="panel resources-section" aria-labelledby="resource-title">
-      <div class="section-heading">
-        <div>
-          <div class="eyebrow dark">Use these links first</div>
-          <h2 id="resource-title">Resource Library</h2>
+    <section class="search-card" aria-label="Find tasks">
+      <label class="search-label" for="searchInput">Search by task, person, tool, folder, or resource</label>
+      <input id="searchInput" type="search" placeholder="Try: Monae, Zeffy, Brand Kit, Funding, Workshop..." />
+      <div class="lane-row">
+        <label>
+          My lane
+          <select id="ownerFilter"><option value="all">Everyone</option></select>
+        </label>
+        <label>
+          Show
+          <select id="categoryFilter"><option value="all">All work</option></select>
+        </label>
+      </div>
+      <details class="advanced-filters">
+        <summary>More filters</summary>
+        <div class="controls">
+          <label>
+            Tool
+            <select id="toolFilter"><option value="all">All tools</option></select>
+          </label>
+          <label>
+            Status
+            <select id="statusFilter"><option value="all">All statuses</option></select>
+          </label>
+          <label>
+            Sort
+            <select id="sortSelect">
+              <option value="priority">Most urgent first</option>
+              <option value="due">Due timing</option>
+              <option value="title">Title</option>
+              <option value="status">Status</option>
+            </select>
+          </label>
         </div>
-        <p>Curated links from the DSG bookmarks. Use only the links that match the task so the team is not overloaded.</p>
-      </div>
-      <div id="resourceGrid" class="resource-grid"></div>
+      </details>
     </section>
+
+    <section class="results-heading" aria-live="polite">
+      <h2>Your matching tasks</h2>
+      <p id="resultsMeta">Loading tasks...</p>
+    </section>
+
+    <section id="taskGrid" class="task-list" aria-live="polite"></section>
+
+    <details class="resource-drawer">
+      <summary>Open shared resource library</summary>
+      <section class="resources-section" aria-labelledby="resource-title">
+        <div class="section-heading">
+          <div>
+            <div class="eyebrow dark">Reference only</div>
+            <h2 id="resource-title">Shared Resource Library</h2>
+          </div>
+          <p>Use task-specific links first. Open this library only when you need a broader resource.</p>
+        </div>
+        <div id="resourceGrid" class="resource-grid"></div>
+      </section>
+    </details>
   </main>
 
   <template id="taskTemplate">
@@ -101,6 +101,12 @@
       </div>
       <h3></h3>
       <p class="context"></p>
+
+      <div class="next-action-block">
+        <strong>Deliverable</strong>
+        <p class="deliverable"></p>
+      </div>
+
       <dl class="meta-grid">
         <div><dt>Owner</dt><dd class="owner"></dd></div>
         <div><dt>Support</dt><dd class="support"></dd></div>
@@ -109,9 +115,14 @@
         <div><dt>Tool</dt><dd class="tool"></dd></div>
         <div><dt>Save final in</dt><dd class="save"></dd></div>
       </dl>
-      <div class="deliverable-block"><strong>Deliverable</strong><p class="deliverable"></p></div>
+
+      <div class="link-block">
+        <strong>Use these links</strong>
+        <div class="links"></div>
+      </div>
+
       <details>
-        <summary>Next steps</summary>
+        <summary>Steps to complete</summary>
         <ol class="next-steps"></ol>
       </details>
       <details>
@@ -119,7 +130,6 @@
         <p class="prompt"></p>
         <button class="copy-button" type="button">Copy prompt</button>
       </details>
-      <div class="links"></div>
     </article>
   </template>
 
