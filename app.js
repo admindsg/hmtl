@@ -1,5 +1,6 @@
 const state = {
   tasks: [],
+  meetings: [],
   resources: [],
   resourceMap: new Map(),
   selectedTaskId: null,
@@ -19,13 +20,16 @@ const els = {
   taskList: document.querySelector('#taskList'),
   taskDetail: document.querySelector('#taskDetail'),
   resourceGrid: document.querySelector('#resourceGrid'),
-  resultsMeta: document.querySelector('#resultsMeta')
+  resultsMeta: document.querySelector('#resultsMeta'),
+  andrewWork: document.querySelector('#andrewWork'),
+  meetingsList: document.querySelector('#meetingsList')
 };
 
 async function loadData() {
-  const [tasksResponse, resourcesResponse] = await Promise.all([
+  const [tasksResponse, resourcesResponse, meetingsResponse] = await Promise.all([
     fetch('data/tasks.json'),
-    fetch('data/resources.json')
+    fetch('data/resources.json'),
+    fetch('data/meetings.json').catch(() => null)
   ]);
 
   if (!tasksResponse.ok || !resourcesResponse.ok) {
@@ -34,11 +38,14 @@ async function loadData() {
 
   state.tasks = await tasksResponse.json();
   state.resources = await resourcesResponse.json();
+  state.meetings = meetingsResponse && meetingsResponse.ok ? await meetingsResponse.json() : [];
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
   state.selectedTaskId = state.tasks[0]?.id || null;
 
   populateFilters();
   renderResources();
+  renderAndrewWork();
+  renderMeetings();
   render();
 }
 
@@ -217,6 +224,48 @@ function renderTaskDetail(task) {
     event.currentTarget.textContent = 'Copied';
     setTimeout(() => { event.currentTarget.textContent = 'Copy prompt'; }, 1200);
   });
+}
+
+function renderAndrewWork() {
+  const andrewTasks = state.tasks
+    .filter(task => personMatches(task, 'Andrew'))
+    .sort((a, b) => (priorityRank[a.priority] || 99) - (priorityRank[b.priority] || 99) || a.title.localeCompare(b.title));
+
+  if (!els.andrewWork) return;
+  els.andrewWork.innerHTML = andrewTasks.map(task => `
+    <button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}">
+      <strong>${escapeHtml(task.title)}</strong>
+      <span>${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)}</span>
+    </button>
+  `).join('');
+
+  els.andrewWork.querySelectorAll('[data-task-id]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.selectedTaskId = button.dataset.taskId;
+      state.filters.person = 'all';
+      state.filters.department = 'all';
+      els.personFilter.value = 'all';
+      els.departmentFilter.value = 'all';
+      render();
+      els.taskDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+function renderMeetings() {
+  if (!els.meetingsList) return;
+  if (!state.meetings.length) {
+    els.meetingsList.innerHTML = '<div class="empty-state">No meetings loaded yet.</div>';
+    return;
+  }
+
+  els.meetingsList.innerHTML = state.meetings.map(meeting => `
+    <article class="meeting-card">
+      <strong>${escapeHtml(meeting.title)}</strong>
+      <span>${escapeHtml(meeting.date)} · ${escapeHtml(meeting.time)}</span>
+      <p>${escapeHtml(meeting.purpose)}</p>
+    </article>
+  `).join('');
 }
 
 function renderResources() {
