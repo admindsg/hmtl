@@ -7,9 +7,10 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-step-complete';
+const dataVersion = '20260701-hide-complete-tasks';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
+const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
 
 const approvedIntakeTasks = [
   {
@@ -105,7 +106,8 @@ async function loadData() {
   if (!tasksResponse.ok || !resourcesResponse.ok) {
     throw new Error('Could not load hub data. If previewing locally, serve the folder with a simple local web server.');
   }
-  state.tasks = [...await tasksResponse.json(), ...approvedIntakeTasks];
+  const loadedTasks = await tasksResponse.json();
+  state.tasks = [...loadedTasks, ...approvedIntakeTasks].filter(isActiveTask);
   state.resources = await resourcesResponse.json();
   state.meetings = meetingsResponse && meetingsResponse.ok ? await meetingsResponse.json() : [];
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
@@ -117,13 +119,25 @@ async function loadData() {
   render();
 }
 
+function normalizeStatus(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isActiveTask(task) {
+  return !inactiveStatuses.has(normalizeStatus(task.status));
+}
+
+function getActiveTasks() {
+  return state.tasks.filter(isActiveTask);
+}
+
 function splitPeople(value) {
   const source = String(value || '');
   return teamMembers.filter(person => new RegExp(`\\b${person}\\b`, 'i').test(source));
 }
 
 function getPeople() {
-  return teamMembers;
+  return teamMembers.filter(person => getActiveTasks().some(task => personMatches(task, person)));
 }
 
 function addOptions(select, values) {
@@ -137,8 +151,9 @@ function addOptions(select, values) {
 }
 
 function populateFilters() {
+  const activeTasks = getActiveTasks();
   addOptions(els.personFilter, getPeople());
-  addOptions(els.departmentFilter, [...new Set(state.tasks.map(task => task.department || task.category).filter(Boolean))].sort());
+  addOptions(els.departmentFilter, [...new Set(activeTasks.map(task => task.department || task.category).filter(Boolean))].sort());
 }
 
 function getSearchText(task) {
@@ -156,7 +171,7 @@ function personMatches(task, person) {
 
 function filteredTasks() {
   const query = state.filters.search.trim().toLowerCase();
-  return state.tasks
+  return getActiveTasks()
     .filter(task => !query || getSearchText(task).includes(query))
     .filter(task => state.filters.department === 'all' || (task.department || task.category) === state.filters.department)
     .filter(task => personMatches(task, state.filters.person))
@@ -165,7 +180,7 @@ function filteredTasks() {
 
 function render() {
   const tasks = filteredTasks();
-  els.resultsMeta.textContent = tasks.length === 1 ? '1 task found' : `${tasks.length} tasks found`;
+  els.resultsMeta.textContent = tasks.length === 1 ? '1 active task found' : `${tasks.length} active tasks found`;
   if (!tasks.some(task => task.id === state.selectedTaskId)) state.selectedTaskId = tasks[0]?.id || null;
   renderTaskList(tasks);
   renderTaskDetail(tasks.find(task => task.id === state.selectedTaskId));
@@ -174,7 +189,7 @@ function render() {
 function renderTaskList(tasks) {
   els.taskList.innerHTML = '';
   if (!tasks.length) {
-    els.taskList.innerHTML = '<div class="empty-state">No matching tasks. Try a different person, department, or search term.</div>';
+    els.taskList.innerHTML = '<div class="empty-state">No active matching tasks. Completed work is hidden from the Hub after it is confirmed complete in the Cockpit.</div>';
     return;
   }
   tasks.forEach(task => {
@@ -193,12 +208,12 @@ function renderTaskList(tasks) {
 
 function renderTaskDetail(task) {
   if (!task) {
-    els.taskDetail.innerHTML = '<div class="empty-state">Choose a task to see the details.</div>';
+    els.taskDetail.innerHTML = '<div class="empty-state">Choose an active task to see the details. Completed work is hidden after it is confirmed complete in the Cockpit.</div>';
     return;
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. If the task needs to change, use the suggestion form below; submissions go to Andrew by email, then accepted updates are recorded in Source Inbox/Cockpit before the Hub is refreshed.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Submit step complete note</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. When a task is confirmed complete in the Cockpit and the Hub refreshes, it disappears from all active Hub areas.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
@@ -208,9 +223,13 @@ function renderTaskDetail(task) {
 }
 
 function renderAndrewWork() {
-  const andrewTasks = state.tasks.filter(task => personMatches(task, 'Andrew')).sort((a, b) => (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99) || a.title.localeCompare(b.title));
+  const andrewTasks = getActiveTasks().filter(task => personMatches(task, 'Andrew')).sort((a, b) => (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99) || a.title.localeCompare(b.title));
   if (!els.andrewWork) return;
-  if (els.andrewMeta) els.andrewMeta.textContent = andrewTasks.length === 1 ? '1 item' : `${andrewTasks.length} items`;
+  if (els.andrewMeta) els.andrewMeta.textContent = andrewTasks.length === 1 ? '1 active item' : `${andrewTasks.length} active items`;
+  if (!andrewTasks.length) {
+    els.andrewWork.innerHTML = '<div class="empty-state">No active Andrew tasks. Confirmed complete work is hidden.</div>';
+    return;
+  }
   els.andrewWork.innerHTML = andrewTasks.map(task => `<button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)}</span></button>`).join('');
   els.andrewWork.querySelectorAll('[data-task-id]').forEach(button => {
     button.addEventListener('click', () => {
@@ -252,7 +271,7 @@ function renderResources() {
 }
 
 async function handleStepComplete(event, task) {
-  const confirmed = window.confirm(`Mark this step complete for Andrew review?\n\n${task.title}`);
+  const confirmed = window.confirm(`Submit this step complete note for Andrew review?\n\n${task.title}`);
   if (!confirmed) return;
   const button = event.currentTarget;
   const status = els.taskDetail.querySelector('.completion-status');
@@ -266,7 +285,7 @@ async function handleStepComplete(event, task) {
   formData.append('Owner', task.owner);
   formData.append('Approves', task.approves);
   formData.append('Save final in', task.saveFinalIn);
-  formData.append('Status requested', 'Step complete confirmation submitted from the Hub. Andrew should review before any Cockpit status change.');
+  formData.append('Status requested', 'Step complete note submitted from the Hub. Andrew should confirm completion in the Cockpit before the task disappears from the Hub.');
 
   status.textContent = 'Sending step complete note...';
   button.disabled = true;
@@ -277,7 +296,7 @@ async function handleStepComplete(event, task) {
       body: formData
     });
     if (!response.ok) throw new Error('Step complete failed');
-    status.textContent = 'Step complete note sent to Andrew.';
+    status.textContent = 'Step complete note sent to Andrew. It will disappear after Cockpit confirmation and the next Hub refresh.';
   } catch (error) {
     status.textContent = 'Could not send. Please try again in a moment.';
   } finally {
