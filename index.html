@@ -122,9 +122,10 @@
 
   <script>
     (() => {
-      const hubScriptVersion = '20260702-quick-glance';
+      const hubScriptVersion = '20260702-apps-script-completion';
       const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
-      const sharedCompletedUrl = 'data/completed-tasks.json';
+      const appsScriptUrl = 'https://script.google.com/a/macros/discoverysoundgarden.com/s/AKfycbx9y4dJTDih2P_PFq2FMFW6ar9_mGrIzQ_ZzSBkVzYqLBQk4ElXH0wJNny7wG5rin4m/exec';
+      const originalFetch = window.fetch.bind(window);
 
       function readLocalCompletedTaskIds() {
         try {
@@ -150,16 +151,67 @@
         return changed;
       }
 
-      async function fetchSharedCompletedTaskIds() {
-        try {
-          const response = await fetch(`${sharedCompletedUrl}?v=${Date.now()}`, { cache: 'no-store' });
-          if (!response.ok) return [];
-          const data = await response.json();
-          return Array.isArray(data) ? data : (Array.isArray(data.completedTaskIds) ? data.completedTaskIds : []);
-        } catch (error) {
-          return [];
-        }
+      function fetchCompletedTaskIdsJsonp() {
+        return new Promise(resolve => {
+          const callbackName = `dsgHubCompleted_${Date.now()}_${Math.round(Math.random() * 100000)}`;
+          const script = document.createElement('script');
+          const timeout = window.setTimeout(() => cleanup([]), 4000);
+
+          function cleanup(taskIds) {
+            window.clearTimeout(timeout);
+            delete window[callbackName];
+            script.remove();
+            resolve(taskIds);
+          }
+
+          window[callbackName] = data => {
+            const taskIds = data && Array.isArray(data.completedTaskIds) ? data.completedTaskIds : [];
+            cleanup(taskIds);
+          };
+
+          script.onerror = () => cleanup([]);
+          script.src = `${appsScriptUrl}?callback=${callbackName}&v=${Date.now()}`;
+          document.body.appendChild(script);
+        });
       }
+
+      function shouldRouteCompletionToAppsScript(resource, options = {}) {
+        const url = typeof resource === 'string' ? resource : resource && resource.url;
+        const body = options && options.body;
+        return typeof url === 'string'
+          && url.includes('formsubmit.co/ajax/admin@discoverysoundgarden.com')
+          && body instanceof FormData
+          && body.has('Task ID');
+      }
+
+      window.fetch = (resource, options = {}) => {
+        if (!shouldRouteCompletionToAppsScript(resource, options)) {
+          return originalFetch(resource, options);
+        }
+
+        const formData = options.body;
+        const payload = {
+          taskId: formData.get('Task ID'),
+          taskTitle: formData.get('Task title'),
+          owner: formData.get('Owner'),
+          approves: formData.get('Approves'),
+          page: formData.get('Page') || window.location.href,
+          userAgent: window.navigator.userAgent
+        };
+
+        originalFetch(appsScriptUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+          keepalive: true
+        }).catch(() => {});
+
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      };
 
       function loadHubApp() {
         const script = document.createElement('script');
@@ -167,14 +219,9 @@
         document.body.appendChild(script);
       }
 
-      fetchSharedCompletedTaskIds()
+      fetchCompletedTaskIdsJsonp()
         .then(mergeCompletedTaskIds)
         .finally(loadHubApp);
-
-      window.setInterval(async () => {
-        const changed = mergeCompletedTaskIds(await fetchSharedCompletedTaskIds());
-        if (changed) window.location.reload();
-      }, 15000);
     })();
   </script>
 </body>
