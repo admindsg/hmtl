@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260701-favicon" />
+  <link rel="stylesheet" href="styles.css?v=20260702-quick-glance" />
 </head>
 <body>
   <header class="site-header">
@@ -24,16 +24,14 @@
   </header>
 
   <main>
-    <section class="focus-panel" aria-labelledby="start-here">
-      <div>
-        <div class="eyebrow dark">Start here</div>
-        <h2 id="start-here">No wall of tasks.</h2>
-        <p>This page works like a task picker. Filter by name or department, then open one task detail at a time.</p>
+    <section class="focus-panel quick-panel" aria-labelledby="quick-glance-title">
+      <div class="quick-heading">
+        <div class="eyebrow dark">Quick glance</div>
+        <h2 id="quick-glance-title">Name, task, deadline.</h2>
+        <p>Click a row to open the full task details below.</p>
       </div>
-      <div class="role-cards">
-        <div><strong>Owner</strong><span>Moves the task forward.</span></div>
-        <div><strong>Support</strong><span>Checks in and helps the owner succeed.</span></div>
-        <div><strong>Approves</strong><span>Reviews the final before it moves.</span></div>
+      <div id="quickGlance" class="quick-glance" aria-label="Quick glance task shortcuts">
+        <div class="empty-state">Loading quick glance...</div>
       </div>
     </section>
 
@@ -124,7 +122,7 @@
 
   <script>
     (() => {
-      const hubScriptVersion = '20260702-shared-complete-status';
+      const hubScriptVersion = '20260702-quick-glance';
       const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
       const sharedCompletedUrl = 'data/completed-tasks.json';
 
