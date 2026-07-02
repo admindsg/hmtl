@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260702-quick-glance" />
+  <link rel="stylesheet" href="styles.css?v=20260702-person-deadline-quick-glance" />
 </head>
 <body>
   <header class="site-header">
@@ -26,9 +26,11 @@
   <main>
     <section class="focus-panel quick-panel" aria-labelledby="quick-glance-title">
       <div class="quick-heading">
-        <div class="eyebrow dark">Quick glance</div>
-        <h2 id="quick-glance-title">Name, task, deadline.</h2>
-        <p>Click a row to open the full task details below.</p>
+        <div>
+          <div class="eyebrow dark">Quick glance</div>
+          <h2 id="quick-glance-title">Tasks by person and deadline.</h2>
+        </div>
+        <p>Click a task to open the full details below.</p>
       </div>
       <div id="quickGlance" class="quick-glance" aria-label="Quick glance task shortcuts">
         <div class="empty-state">Loading quick glance...</div>
@@ -122,7 +124,7 @@
 
   <script>
     (() => {
-      const hubScriptVersion = '20260702-cockpit-completion-jsonp';
+      const hubScriptVersion = '20260702-quick-person-deadline-index';
       const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
       const appsScriptUrl = 'https://script.google.com/a/macros/discoverysoundgarden.com/s/AKfycbx9y4dJTDih2P_PFq2FMFW6ar9_mGrIzQ_ZzSBkVzYqLBQk4ElXH0wJNny7wG5rin4m/exec';
       const originalFetch = window.fetch.bind(window);
@@ -214,9 +216,117 @@
         });
       };
 
+
+      function installQuickGlanceEnhancement() {
+        const style = document.createElement('style');
+        style.textContent = `
+          .quick-panel{grid-template-columns:1fr}
+          .quick-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap}
+          .quick-heading p{display:none}
+          .quick-glance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+          .quick-person-group{background:#fffdf5;border:1px solid var(--stone-line);border-radius:18px;padding:12px;display:grid;gap:8px}
+          .quick-person-group h3{margin:0;color:var(--deep-green);font-size:1rem;letter-spacing:.01em}
+          .quick-person-tasks{display:grid;gap:8px}
+          .quick-glance-row{grid-template-columns:minmax(0,1fr) minmax(100px,.28fr);min-height:58px}
+          .quick-owner{display:none}
+          .quick-task{font-size:.9rem}
+          .quick-due{display:grid;gap:2px}
+          .quick-due strong{display:block;font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7}
+          @media(max-width:820px){.quick-glance{grid-template-columns:1fr}.quick-heading{align-items:start}.quick-glance-row{grid-template-columns:1fr}.quick-due{justify-self:start;text-align:left}}
+        `;
+        document.head.appendChild(style);
+
+        const teamOrder = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
+        const quick = document.querySelector('#quickGlance');
+        const taskList = document.querySelector('#taskList');
+        const taskDetail = document.querySelector('#taskDetail');
+        if (!quick || !taskList) return;
+
+        function deadlineRank(text) {
+          const value = String(text || '').toLowerCase();
+          const iso = value.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+          if (iso) return new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00`).getTime();
+          if (value.includes('immediate')) return new Date('2026-07-02T00:00:00').getTime();
+          if (value.includes('this week') || value.includes('start this week')) return new Date('2026-07-05T00:00:00').getTime();
+          if (value.includes('next team call')) return new Date('2026-07-06T00:00:00').getTime();
+          if (value.includes('post-mortem')) return new Date('2026-07-10T00:00:00').getTime();
+          if (value.includes('after urgent cleanup')) return new Date('2026-07-15T00:00:00').getTime();
+          return new Date('2026-07-31T00:00:00').getTime();
+        }
+
+        function deadlineLabel(text) {
+          const value = String(text || '').trim();
+          const iso = value.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+          if (!iso) return value || 'No deadline';
+          const parsed = new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00`);
+          return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(parsed);
+        }
+
+        function personRank(person, tasks) {
+          const order = teamOrder.indexOf(person);
+          return order >= 0 ? order : 999 + Math.min(...tasks.map(task => task.rank));
+        }
+
+        let enhancing = false;
+        function rebuildQuickGlance() {
+          if (enhancing) return;
+          const rows = [...taskList.querySelectorAll('.task-row')];
+          if (!rows.length) return;
+
+          const groups = new Map();
+          rows.forEach(row => {
+            const title = row.querySelector('.task-row-title')?.textContent?.trim() || 'Untitled task';
+            const meta = row.querySelector('.task-row-meta')?.textContent || '';
+            const parts = meta.split(' · ');
+            const owner = parts[2]?.trim() || 'Unassigned';
+            const due = parts[1]?.trim() || 'No deadline';
+            const task = { title, owner, due, rank: deadlineRank(due), row };
+            if (!groups.has(owner)) groups.set(owner, []);
+            groups.get(owner).push(task);
+          });
+
+          enhancing = true;
+          quick.innerHTML = '';
+          [...groups.entries()]
+            .sort(([personA, tasksA], [personB, tasksB]) => {
+              const personDifference = personRank(personA, tasksA) - personRank(personB, tasksB);
+              if (personDifference !== 0) return personDifference;
+              return personA.localeCompare(personB);
+            })
+            .forEach(([person, tasks]) => {
+              const section = document.createElement('section');
+              section.className = 'quick-person-group';
+              section.innerHTML = `<h3>${person}</h3><div class="quick-person-tasks"></div>`;
+              const list = section.querySelector('.quick-person-tasks');
+
+              tasks.sort((a, b) => a.rank - b.rank || a.title.localeCompare(b.title)).forEach(task => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `quick-glance-row ${task.row.classList.contains('is-selected') ? 'is-selected' : ''}`;
+                button.innerHTML = `<span class="quick-task"></span><span class="quick-due"><strong>Deadline</strong></span>`;
+                button.querySelector('.quick-task').textContent = task.title;
+                button.querySelector('.quick-due').append(document.createTextNode(deadlineLabel(task.due)));
+                button.addEventListener('click', () => {
+                  task.row.click();
+                  taskDetail?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+                list.appendChild(button);
+              });
+
+              quick.appendChild(section);
+            });
+          enhancing = false;
+        }
+
+        const observer = new MutationObserver(() => window.requestAnimationFrame(rebuildQuickGlance));
+        observer.observe(taskList, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+        window.requestAnimationFrame(rebuildQuickGlance);
+      }
+
       function loadHubApp() {
         const script = document.createElement('script');
         script.src = `app.js?v=${hubScriptVersion}`;
+        script.onload = installQuickGlanceEnhancement;
         document.body.appendChild(script);
       }
 
