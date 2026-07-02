@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260702-simple-quick-glance" />
+  <link rel="stylesheet" href="styles.css?v=20260702-weekly-priority-quick-scan" />
 </head>
 <body>
   <header class="site-header">
@@ -27,13 +27,13 @@
     <section class="focus-panel quick-panel" aria-labelledby="quick-glance-title">
       <div class="quick-heading">
         <div>
-          <div class="eyebrow dark">Quick glance</div>
-          <h2 id="quick-glance-title">Person, task, deadline.</h2>
+          <div class="eyebrow dark">Quick scan</div>
+          <h2 id="quick-glance-title">This week and priority this week.</h2>
         </div>
         <p>Click a task to open the full details below.</p>
       </div>
-      <div id="quickGlance" class="quick-glance" aria-label="Quick glance task shortcuts">
-        <div class="empty-state">Loading quick glance...</div>
+      <div id="quickGlance" class="quick-glance" aria-label="Quick scan task shortcuts">
+        <div class="empty-state">Loading quick scan...</div>
       </div>
     </section>
 
@@ -124,7 +124,7 @@
 
   <script>
     (() => {
-      const hubScriptVersion = '20260702-simple-quick-glance';
+      const hubScriptVersion = '20260702-weekly-priority-quick-scan';
       const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
       const appsScriptUrl = 'https://script.google.com/a/macros/discoverysoundgarden.com/s/AKfycbx9y4dJTDih2P_PFq2FMFW6ar9_mGrIzQ_ZzSBkVzYqLBQk4ElXH0wJNny7wG5rin4m/exec';
       const originalFetch = window.fetch.bind(window);
@@ -222,7 +222,7 @@
         style.textContent = `
           .quick-panel{grid-template-columns:1fr}
           .quick-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap}
-          .quick-heading p{font-weight:700;color:var(--deep-green);margin:0;max-width:280px}
+          .quick-heading p{font-weight:700;color:var(--deep-green);margin:0;max-width:360px}
           .quick-glance{display:grid;gap:8px}
           .quick-glance-header,.quick-glance-row{display:grid;grid-template-columns:minmax(90px,.22fr) minmax(220px,1fr) minmax(140px,.28fr);gap:12px;align-items:center}
           .quick-glance-header{padding:0 14px 4px;color:var(--deep-green);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
@@ -232,6 +232,7 @@
           .quick-owner{font-weight:800;color:var(--deep-green);white-space:nowrap}
           .quick-task{font-weight:700;color:var(--ink);line-height:1.25}
           .quick-due{justify-self:end;text-align:right;font-weight:800;color:var(--clay);white-space:nowrap}
+          .quick-empty{background:#fffdf5;border:1px solid var(--stone-line);border-radius:16px;padding:14px;color:var(--muted);font-weight:700}
           @media(max-width:820px){.quick-heading{align-items:start}.quick-glance-header{display:none}.quick-glance-row{grid-template-columns:1fr;gap:4px}.quick-owner::before{content:'Person: ';font-weight:700;color:var(--muted)}.quick-task::before{content:'Task: ';font-weight:700;color:var(--muted)}.quick-due{justify-self:start;text-align:left}.quick-due::before{content:'Deadline: ';font-weight:700;color:var(--muted)}}
         `;
         document.head.appendChild(style);
@@ -267,6 +268,21 @@
           return order >= 0 ? order : 999;
         }
 
+        function isThisWeekOrPriority(task) {
+          const text = `${task.title} ${task.due}`.toLowerCase();
+          return text.includes('immediate')
+            || text.includes('this week')
+            || text.includes('start this week')
+            || text.includes('next week')
+            || text.includes('next team call')
+            || text.includes('post-mortem')
+            || text.includes('st-119.2')
+            || text.includes('compliance calendar')
+            || text.includes('finance document')
+            || text.includes('charities')
+            || text.includes('availability');
+        }
+
         let enhancing = false;
         function rebuildQuickGlance() {
           if (enhancing) return;
@@ -280,7 +296,7 @@
             const owner = parts[2]?.trim() || 'Unassigned';
             const due = parts[1]?.trim() || 'No deadline';
             return { title, owner, due, rank: deadlineRank(due), row };
-          }).sort((a, b) => {
+          }).filter(isThisWeekOrPriority).sort((a, b) => {
             const personDifference = personRank(a.owner) - personRank(b.owner);
             if (personDifference !== 0) return personDifference;
             return a.rank - b.rank || a.title.localeCompare(b.title);
@@ -288,6 +304,9 @@
 
           enhancing = true;
           quick.innerHTML = '<div class="quick-glance-header" aria-hidden="true"><span>Person</span><span>Task</span><span>Deadline</span></div>';
+          if (!tasks.length) {
+            quick.innerHTML = '<div class="quick-empty">No this-week priority tasks are showing right now. Use the task list below for the full backlog.</div>';
+          }
           tasks.forEach(task => {
             const button = document.createElement('button');
             button.type = 'button';
