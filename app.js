@@ -84,6 +84,7 @@ const els = {
   searchInput: document.querySelector('#searchInput'),
   personFilter: document.querySelector('#personFilter'),
   departmentFilter: document.querySelector('#departmentFilter'),
+  quickGlance: document.querySelector('#quickGlance'),
   taskList: document.querySelector('#taskList'),
   taskDetail: document.querySelector('#taskDetail'),
   resourceGrid: document.querySelector('#resourceGrid'),
@@ -210,8 +211,36 @@ function render() {
   const tasks = filteredTasks();
   els.resultsMeta.textContent = tasks.length === 1 ? '1 active task found' : `${tasks.length} active tasks found`;
   if (!tasks.some(task => task.id === state.selectedTaskId)) state.selectedTaskId = tasks[0]?.id || null;
+  renderQuickGlance(tasks);
   renderTaskList(tasks);
   renderTaskDetail(tasks.find(task => task.id === state.selectedTaskId));
+}
+
+function renderQuickGlance(tasks) {
+  if (!els.quickGlance) return;
+  els.quickGlance.innerHTML = '';
+  if (!tasks.length) {
+    els.quickGlance.innerHTML = '<div class="empty-state">No active matching tasks.</div>';
+    return;
+  }
+  tasks.slice(0, 8).forEach(task => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `quick-glance-row ${task.id === state.selectedTaskId ? 'is-selected' : ''}`;
+    button.innerHTML = `<span class="quick-owner">${escapeHtml(task.owner)}</span><span class="quick-task">${escapeHtml(task.title)}</span><span class="quick-due">${escapeHtml(task.due)}</span>`;
+    button.addEventListener('click', () => {
+      state.selectedTaskId = task.id;
+      render();
+      els.taskDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    els.quickGlance.appendChild(button);
+  });
+  if (tasks.length > 8) {
+    const note = document.createElement('div');
+    note.className = 'quick-glance-more';
+    note.textContent = `${tasks.length - 8} more active tasks in the full list below.`;
+    els.quickGlance.appendChild(note);
+  }
 }
 
 function renderTaskList(tasks) {
