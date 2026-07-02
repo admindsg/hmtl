@@ -7,7 +7,7 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-hide-complete-tasks';
+const dataVersion = '20260701-hide-after-confirm';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
@@ -137,7 +137,7 @@ function splitPeople(value) {
 }
 
 function getPeople() {
-  return teamMembers.filter(person => getActiveTasks().some(task => personMatches(task, person)));
+  return teamMembers;
 }
 
 function addOptions(select, values) {
@@ -189,7 +189,7 @@ function render() {
 function renderTaskList(tasks) {
   els.taskList.innerHTML = '';
   if (!tasks.length) {
-    els.taskList.innerHTML = '<div class="empty-state">No active matching tasks. Completed work is hidden from the Hub after it is confirmed complete in the Cockpit.</div>';
+    els.taskList.innerHTML = '<div class="empty-state">No active matching tasks.</div>';
     return;
   }
   tasks.forEach(task => {
@@ -208,12 +208,12 @@ function renderTaskList(tasks) {
 
 function renderTaskDetail(task) {
   if (!task) {
-    els.taskDetail.innerHTML = '<div class="empty-state">Choose an active task to see the details. Completed work is hidden after it is confirmed complete in the Cockpit.</div>';
+    els.taskDetail.innerHTML = '<div class="empty-state">Choose an active task to see the details.</div>';
     return;
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Submit step complete note</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. When a task is confirmed complete in the Cockpit and the Hub refreshes, it disappears from all active Hub areas.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Confirming a step complete sends Andrew a note and removes the task from this Hub view.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
@@ -227,7 +227,7 @@ function renderAndrewWork() {
   if (!els.andrewWork) return;
   if (els.andrewMeta) els.andrewMeta.textContent = andrewTasks.length === 1 ? '1 active item' : `${andrewTasks.length} active items`;
   if (!andrewTasks.length) {
-    els.andrewWork.innerHTML = '<div class="empty-state">No active Andrew tasks. Confirmed complete work is hidden.</div>';
+    els.andrewWork.innerHTML = '<div class="empty-state">No active Andrew tasks.</div>';
     return;
   }
   els.andrewWork.innerHTML = andrewTasks.map(task => `<button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)}</span></button>`).join('');
@@ -271,7 +271,7 @@ function renderResources() {
 }
 
 async function handleStepComplete(event, task) {
-  const confirmed = window.confirm(`Submit this step complete note for Andrew review?\n\n${task.title}`);
+  const confirmed = window.confirm(`Are you sure this step is complete?\n\n${task.title}`);
   if (!confirmed) return;
   const button = event.currentTarget;
   const status = els.taskDetail.querySelector('.completion-status');
@@ -285,7 +285,7 @@ async function handleStepComplete(event, task) {
   formData.append('Owner', task.owner);
   formData.append('Approves', task.approves);
   formData.append('Save final in', task.saveFinalIn);
-  formData.append('Status requested', 'Step complete note submitted from the Hub. Andrew should confirm completion in the Cockpit before the task disappears from the Hub.');
+  formData.append('Status requested', 'Step complete confirmation submitted from the Hub. Andrew should review before any Cockpit status change.');
 
   status.textContent = 'Sending step complete note...';
   button.disabled = true;
@@ -296,10 +296,13 @@ async function handleStepComplete(event, task) {
       body: formData
     });
     if (!response.ok) throw new Error('Step complete failed');
-    status.textContent = 'Step complete note sent to Andrew. It will disappear after Cockpit confirmation and the next Hub refresh.';
+    state.tasks = state.tasks.filter(activeTask => activeTask.id !== task.id);
+    state.selectedTaskId = null;
+    populateFilters();
+    renderAndrewWork();
+    render();
   } catch (error) {
     status.textContent = 'Could not send. Please try again in a moment.';
-  } finally {
     button.disabled = false;
   }
 }
