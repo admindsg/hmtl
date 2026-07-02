@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260702-person-deadline-quick-glance" />
+  <link rel="stylesheet" href="styles.css?v=20260702-simple-quick-glance" />
 </head>
 <body>
   <header class="site-header">
@@ -28,7 +28,7 @@
       <div class="quick-heading">
         <div>
           <div class="eyebrow dark">Quick glance</div>
-          <h2 id="quick-glance-title">Tasks by person and deadline.</h2>
+          <h2 id="quick-glance-title">Person, task, deadline.</h2>
         </div>
         <p>Click a task to open the full details below.</p>
       </div>
@@ -124,7 +124,7 @@
 
   <script>
     (() => {
-      const hubScriptVersion = '20260702-quick-person-deadline-index';
+      const hubScriptVersion = '20260702-simple-quick-glance';
       const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
       const appsScriptUrl = 'https://script.google.com/a/macros/discoverysoundgarden.com/s/AKfycbx9y4dJTDih2P_PFq2FMFW6ar9_mGrIzQ_ZzSBkVzYqLBQk4ElXH0wJNny7wG5rin4m/exec';
       const originalFetch = window.fetch.bind(window);
@@ -222,17 +222,17 @@
         style.textContent = `
           .quick-panel{grid-template-columns:1fr}
           .quick-heading{display:flex;align-items:end;justify-content:space-between;gap:18px;flex-wrap:wrap}
-          .quick-heading p{display:none}
-          .quick-glance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-          .quick-person-group{background:#fffdf5;border:1px solid var(--stone-line);border-radius:18px;padding:12px;display:grid;gap:8px}
-          .quick-person-group h3{margin:0;color:var(--deep-green);font-size:1rem;letter-spacing:.01em}
-          .quick-person-tasks{display:grid;gap:8px}
-          .quick-glance-row{grid-template-columns:minmax(0,1fr) minmax(100px,.28fr);min-height:58px}
-          .quick-owner{display:none}
-          .quick-task{font-size:.9rem}
-          .quick-due{display:grid;gap:2px}
-          .quick-due strong{display:block;font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7}
-          @media(max-width:820px){.quick-glance{grid-template-columns:1fr}.quick-heading{align-items:start}.quick-glance-row{grid-template-columns:1fr}.quick-due{justify-self:start;text-align:left}}
+          .quick-heading p{font-weight:700;color:var(--deep-green);margin:0;max-width:280px}
+          .quick-glance{display:grid;gap:8px}
+          .quick-glance-header,.quick-glance-row{display:grid;grid-template-columns:minmax(90px,.22fr) minmax(220px,1fr) minmax(140px,.28fr);gap:12px;align-items:center}
+          .quick-glance-header{padding:0 14px 4px;color:var(--deep-green);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+          .quick-glance-row{width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--stone-line);border-radius:14px;background:#fffdf5;text-align:left;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+          .quick-glance-row:hover,.quick-glance-row:focus-visible{transform:translateY(-1px);box-shadow:0 10px 22px rgba(23,48,37,.08);border-color:rgba(47,91,66,.35);outline:none}
+          .quick-glance-row.is-selected{background:#f4f0df;border-color:var(--deep-green)}
+          .quick-owner{font-weight:800;color:var(--deep-green);white-space:nowrap}
+          .quick-task{font-weight:700;color:var(--ink);line-height:1.25}
+          .quick-due{justify-self:end;text-align:right;font-weight:800;color:var(--clay);white-space:nowrap}
+          @media(max-width:820px){.quick-heading{align-items:start}.quick-glance-header{display:none}.quick-glance-row{grid-template-columns:1fr;gap:4px}.quick-owner::before{content:'Person: ';font-weight:700;color:var(--muted)}.quick-task::before{content:'Task: ';font-weight:700;color:var(--muted)}.quick-due{justify-self:start;text-align:left}.quick-due::before{content:'Deadline: ';font-weight:700;color:var(--muted)}}
         `;
         document.head.appendChild(style);
 
@@ -262,9 +262,9 @@
           return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(parsed);
         }
 
-        function personRank(person, tasks) {
+        function personRank(person) {
           const order = teamOrder.indexOf(person);
-          return order >= 0 ? order : 999 + Math.min(...tasks.map(task => task.rank));
+          return order >= 0 ? order : 999;
         }
 
         let enhancing = false;
@@ -273,48 +273,36 @@
           const rows = [...taskList.querySelectorAll('.task-row')];
           if (!rows.length) return;
 
-          const groups = new Map();
-          rows.forEach(row => {
+          const tasks = rows.map(row => {
             const title = row.querySelector('.task-row-title')?.textContent?.trim() || 'Untitled task';
             const meta = row.querySelector('.task-row-meta')?.textContent || '';
             const parts = meta.split(' · ');
             const owner = parts[2]?.trim() || 'Unassigned';
             const due = parts[1]?.trim() || 'No deadline';
-            const task = { title, owner, due, rank: deadlineRank(due), row };
-            if (!groups.has(owner)) groups.set(owner, []);
-            groups.get(owner).push(task);
+            return { title, owner, due, rank: deadlineRank(due), row };
+          }).sort((a, b) => {
+            const personDifference = personRank(a.owner) - personRank(b.owner);
+            if (personDifference !== 0) return personDifference;
+            return a.rank - b.rank || a.title.localeCompare(b.title);
           });
 
           enhancing = true;
-          quick.innerHTML = '';
-          [...groups.entries()]
-            .sort(([personA, tasksA], [personB, tasksB]) => {
-              const personDifference = personRank(personA, tasksA) - personRank(personB, tasksB);
-              if (personDifference !== 0) return personDifference;
-              return personA.localeCompare(personB);
-            })
-            .forEach(([person, tasks]) => {
-              const section = document.createElement('section');
-              section.className = 'quick-person-group';
-              section.innerHTML = `<h3>${person}</h3><div class="quick-person-tasks"></div>`;
-              const list = section.querySelector('.quick-person-tasks');
-
-              tasks.sort((a, b) => a.rank - b.rank || a.title.localeCompare(b.title)).forEach(task => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = `quick-glance-row ${task.row.classList.contains('is-selected') ? 'is-selected' : ''}`;
-                button.innerHTML = `<span class="quick-task"></span><span class="quick-due"><strong>Deadline</strong></span>`;
-                button.querySelector('.quick-task').textContent = task.title;
-                button.querySelector('.quick-due').append(document.createTextNode(deadlineLabel(task.due)));
-                button.addEventListener('click', () => {
-                  task.row.click();
-                  taskDetail?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-                list.appendChild(button);
-              });
-
-              quick.appendChild(section);
+          quick.innerHTML = '<div class="quick-glance-header" aria-hidden="true"><span>Person</span><span>Task</span><span>Deadline</span></div>';
+          tasks.forEach(task => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `quick-glance-row ${task.row.classList.contains('is-selected') ? 'is-selected' : ''}`;
+            button.setAttribute('aria-label', `${task.owner}: ${task.title}. Deadline: ${deadlineLabel(task.due)}`);
+            button.innerHTML = '<span class="quick-owner"></span><span class="quick-task"></span><span class="quick-due"></span>';
+            button.querySelector('.quick-owner').textContent = task.owner;
+            button.querySelector('.quick-task').textContent = task.title;
+            button.querySelector('.quick-due').textContent = deadlineLabel(task.due);
+            button.addEventListener('click', () => {
+              task.row.click();
+              taskDetail?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
+            quick.appendChild(button);
+          });
           enhancing = false;
         }
 
