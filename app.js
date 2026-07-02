@@ -7,7 +7,8 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260701-hide-after-confirm';
+const dataVersion = '20260702-local-complete-cache';
+const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
@@ -107,7 +108,7 @@ async function loadData() {
     throw new Error('Could not load hub data. If previewing locally, serve the folder with a simple local web server.');
   }
   const loadedTasks = await tasksResponse.json();
-  state.tasks = [...loadedTasks, ...approvedIntakeTasks].filter(isActiveTask);
+  state.tasks = [...loadedTasks, ...approvedIntakeTasks].filter(isVisibleTask);
   state.resources = await resourcesResponse.json();
   state.meetings = meetingsResponse && meetingsResponse.ok ? await meetingsResponse.json() : [];
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
@@ -125,6 +126,33 @@ function normalizeStatus(value) {
 
 function isActiveTask(task) {
   return !inactiveStatuses.has(normalizeStatus(task.status));
+}
+
+function readCompletedTaskIds() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(completedTaskStorageKey) || '[]');
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch (error) {
+    return new Set();
+  }
+}
+
+function writeCompletedTaskIds(taskIds) {
+  try {
+    window.localStorage.setItem(completedTaskStorageKey, JSON.stringify([...taskIds]));
+  } catch (error) {
+    // Ignore storage errors; the email confirmation still remains the source for Andrew's review.
+  }
+}
+
+function rememberCompletedTask(taskId) {
+  const taskIds = readCompletedTaskIds();
+  taskIds.add(taskId);
+  writeCompletedTaskIds(taskIds);
+}
+
+function isVisibleTask(task) {
+  return isActiveTask(task) && !readCompletedTaskIds().has(task.id);
 }
 
 function getActiveTasks() {
@@ -213,7 +241,7 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Confirming a step complete sends Andrew a note and removes the task from this Hub view.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Confirming a step complete sends Andrew a note and removes the task from this browser's Hub view.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
@@ -296,6 +324,7 @@ async function handleStepComplete(event, task) {
       body: formData
     });
     if (!response.ok) throw new Error('Step complete failed');
+    rememberCompletedTask(task.id);
     state.tasks = state.tasks.filter(activeTask => activeTask.id !== task.id);
     state.selectedTaskId = null;
     populateFilters();
