@@ -122,6 +122,62 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260702-local-complete-cache"></script>
+  <script>
+    (() => {
+      const hubScriptVersion = '20260702-shared-complete-status';
+      const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
+      const sharedCompletedUrl = 'data/completed-tasks.json';
+
+      function readLocalCompletedTaskIds() {
+        try {
+          const saved = JSON.parse(window.localStorage.getItem(completedTaskStorageKey) || '[]');
+          return new Set(Array.isArray(saved) ? saved : []);
+        } catch (error) {
+          return new Set();
+        }
+      }
+
+      function mergeCompletedTaskIds(taskIds) {
+        const localIds = readLocalCompletedTaskIds();
+        let changed = false;
+        taskIds.forEach(taskId => {
+          if (taskId && !localIds.has(taskId)) {
+            localIds.add(taskId);
+            changed = true;
+          }
+        });
+        if (changed) {
+          window.localStorage.setItem(completedTaskStorageKey, JSON.stringify([...localIds]));
+        }
+        return changed;
+      }
+
+      async function fetchSharedCompletedTaskIds() {
+        try {
+          const response = await fetch(`${sharedCompletedUrl}?v=${Date.now()}`, { cache: 'no-store' });
+          if (!response.ok) return [];
+          const data = await response.json();
+          return Array.isArray(data) ? data : (Array.isArray(data.completedTaskIds) ? data.completedTaskIds : []);
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function loadHubApp() {
+        const script = document.createElement('script');
+        script.src = `app.js?v=${hubScriptVersion}`;
+        document.body.appendChild(script);
+      }
+
+      fetchSharedCompletedTaskIds()
+        .then(mergeCompletedTaskIds)
+        .finally(loadHubApp);
+
+      window.setInterval(async () => {
+        const changed = mergeCompletedTaskIds(await fetchSharedCompletedTaskIds());
+        if (changed) window.location.reload();
+      }, 15000);
+    })();
+  </script>
 </body>
 </html>
