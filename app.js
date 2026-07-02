@@ -7,7 +7,7 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260702-local-complete-cache';
+const dataVersion = '20260702-due-date-labels';
 const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
@@ -162,7 +162,7 @@ function getActiveTasks() {
 
 function splitPeople(value) {
   const source = String(value || '');
-  return teamMembers.filter(person => new RegExp(`\\b${person}\\b`, 'i').test(source));
+  return teamMembers.filter(person => new RegExp(`\b${person}\b`, 'i').test(source));
 }
 
 function getPeople() {
@@ -191,6 +191,36 @@ function getSearchText(task) {
     .filter(Boolean)
     .map(resource => `${resource.label} ${resource.category} ${resource.tool} ${resource.useWhen}`);
   return [task.title, task.department, task.category, task.project, task.status, task.priority, task.owner, task.support, task.approves, task.due, task.tool, task.audience, task.deliverable, task.saveFinalIn, task.context, task.prompt, ...(task.nextSteps || []), ...linkedResources].join(' ').toLowerCase();
+}
+
+function formatDueLabel(value) {
+  const source = String(value || '').trim();
+  if (!source) return 'Due: Ask';
+
+  const iso = source.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+  if (iso) {
+    const parsed = new Date(`${iso[1]}-${iso[2]}-${iso[3]}T00:00:00`);
+    return `Due: ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(parsed)}`;
+  }
+
+  const monthDate = source.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan\.?|Feb\.?|Mar\.?|Apr\.?|Jun\.?|Jul\.?|Aug\.?|Sep\.?|Sept\.?|Oct\.?|Nov\.?|Dec\.?)\s+(\d{1,2})(?:st|nd|rd|th)?\b/i);
+  if (monthDate) {
+    const parsed = new Date(`${monthDate[1].replace('.', '')} ${monthDate[2]}, 2026`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return `Due: ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(parsed)}`;
+    }
+  }
+
+  const numeric = source.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (numeric) {
+    const year = numeric[3] ? (numeric[3].length === 2 ? `20${numeric[3]}` : numeric[3]) : '2026';
+    const parsed = new Date(`${year}-${numeric[1].padStart(2, '0')}-${numeric[2].padStart(2, '0')}T00:00:00`);
+    if (!Number.isNaN(parsed.getTime())) {
+      return `Due: ${new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(parsed)}`;
+    }
+  }
+
+  return 'Due: Ask';
 }
 
 function personMatches(task, person) {
@@ -227,7 +257,7 @@ function renderQuickGlance(tasks) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `quick-glance-row ${task.id === state.selectedTaskId ? 'is-selected' : ''}`;
-    button.innerHTML = `<span class="quick-owner">${escapeHtml(task.owner)}</span><span class="quick-task">${escapeHtml(task.title)}</span><span class="quick-due">${escapeHtml(task.due)}</span>`;
+    button.innerHTML = `<span class="quick-owner">${escapeHtml(task.owner)}</span><span class="quick-task">${escapeHtml(task.title)}</span><span class="quick-due">${escapeHtml(formatDueLabel(task.due))}</span>`;
     button.addEventListener('click', () => {
       state.selectedTaskId = task.id;
       render();
@@ -253,7 +283,7 @@ function renderTaskList(tasks) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `task-row ${task.id === state.selectedTaskId ? 'is-selected' : ''}`;
-    button.innerHTML = `<span class="task-row-title">${escapeHtml(task.title)}</span><span class="task-row-meta">${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)} · ${escapeHtml(task.owner)}</span>`;
+    button.innerHTML = `<span class="task-row-title">${escapeHtml(task.title)}</span><span class="task-row-meta">${escapeHtml(task.department || task.category)} · ${escapeHtml(formatDueLabel(task.due))} · ${escapeHtml(task.owner)}</span>`;
     button.addEventListener('click', () => {
       state.selectedTaskId = task.id;
       render();
@@ -270,7 +300,7 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(task.due)}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Confirming a step complete sends Andrew a note and removes the task from this browser's Hub view.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Confirming a step complete sends Andrew a note and removes the task from this browser's Hub view.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
@@ -287,7 +317,7 @@ function renderAndrewWork() {
     els.andrewWork.innerHTML = '<div class="empty-state">No active Andrew tasks.</div>';
     return;
   }
-  els.andrewWork.innerHTML = andrewTasks.map(task => `<button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.department || task.category)} · ${escapeHtml(task.due)}</span></button>`).join('');
+  els.andrewWork.innerHTML = andrewTasks.map(task => `<button type="button" class="andrew-chip" data-task-id="${escapeHtml(task.id)}"><strong>${escapeHtml(task.title)}</strong><span>${escapeHtml(task.department || task.category)} · ${escapeHtml(formatDueLabel(task.due))}</span></button>`).join('');
   els.andrewWork.querySelectorAll('[data-task-id]').forEach(button => {
     button.addEventListener('click', () => {
       state.selectedTaskId = button.dataset.taskId;
