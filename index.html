@@ -122,7 +122,7 @@
 
   <script>
     (() => {
-      const hubScriptVersion = '20260702-apps-script-completion';
+      const hubScriptVersion = '20260702-cockpit-completion-jsonp';
       const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
       const appsScriptUrl = 'https://script.google.com/a/macros/discoverysoundgarden.com/s/AKfycbx9y4dJTDih2P_PFq2FMFW6ar9_mGrIzQ_ZzSBkVzYqLBQk4ElXH0wJNny7wG5rin4m/exec';
       const originalFetch = window.fetch.bind(window);
@@ -151,28 +151,32 @@
         return changed;
       }
 
-      function fetchCompletedTaskIdsJsonp() {
-        return new Promise(resolve => {
-          const callbackName = `dsgHubCompleted_${Date.now()}_${Math.round(Math.random() * 100000)}`;
+      function requestAppsScriptJsonp(params) {
+        return new Promise((resolve, reject) => {
+          const callbackName = `dsgHubCallback_${Date.now()}_${Math.round(Math.random() * 100000)}`;
           const script = document.createElement('script');
-          const timeout = window.setTimeout(() => cleanup([]), 4000);
+          const timeout = window.setTimeout(() => cleanup(null, new Error('Apps Script request timed out')), 8000);
+          const query = new URLSearchParams({ ...params, callback: callbackName, v: String(Date.now()) });
 
-          function cleanup(taskIds) {
+          function cleanup(data, error) {
             window.clearTimeout(timeout);
             delete window[callbackName];
             script.remove();
-            resolve(taskIds);
+            if (error) reject(error);
+            else resolve(data || {});
           }
 
-          window[callbackName] = data => {
-            const taskIds = data && Array.isArray(data.completedTaskIds) ? data.completedTaskIds : [];
-            cleanup(taskIds);
-          };
-
-          script.onerror = () => cleanup([]);
-          script.src = `${appsScriptUrl}?callback=${callbackName}&v=${Date.now()}`;
+          window[callbackName] = data => cleanup(data, null);
+          script.onerror = () => cleanup(null, new Error('Apps Script request failed'));
+          script.src = `${appsScriptUrl}?${query.toString()}`;
           document.body.appendChild(script);
         });
+      }
+
+      function fetchCompletedTaskIdsJsonp() {
+        return requestAppsScriptJsonp({})
+          .then(data => data && Array.isArray(data.completedTaskIds) ? data.completedTaskIds : [])
+          .catch(() => []);
       }
 
       function shouldRouteCompletionToAppsScript(resource, options = {}) {
@@ -190,27 +194,24 @@
         }
 
         const formData = options.body;
-        const payload = {
-          taskId: formData.get('Task ID'),
-          taskTitle: formData.get('Task title'),
-          owner: formData.get('Owner'),
-          approves: formData.get('Approves'),
+        return requestAppsScriptJsonp({
+          action: 'complete',
+          taskId: formData.get('Task ID') || '',
+          taskTitle: formData.get('Task title') || '',
+          owner: formData.get('Owner') || '',
+          approves: formData.get('Approves') || '',
           page: formData.get('Page') || window.location.href,
           userAgent: window.navigator.userAgent
-        };
-
-        originalFetch(appsScriptUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload),
-          keepalive: true
-        }).catch(() => {});
-
-        return Promise.resolve(new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        }));
+        }).then(data => {
+          if (!data || !data.ok) {
+            throw new Error(data && data.error ? data.error : 'Cockpit completion failed');
+          }
+          mergeCompletedTaskIds(data.completedTaskIds || [formData.get('Task ID')]);
+          return new Response(JSON.stringify(data), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        });
       };
 
       function loadHubApp() {
