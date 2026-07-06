@@ -1,22 +1,32 @@
 [
   {
-    "id": "meeting-placeholder-board-followup",
-    "title": "Board Follow-Up / Team Working Session",
+    "id": "meeting-august-september-focus",
+    "title": "August/September Focus Meeting",
     "date": "TBD",
     "time": "From Google Calendar",
     "owner": "Andrew",
     "department": "Team Operations",
-    "purpose": "Review current cockpit tasks, blockers, approvals, and next moves.",
-    "source": "Google Calendar placeholder"
+    "purpose": "Decide what August/September should accomplish, how programming and audience strategy work together, what operating structure needs to change, and what concrete outputs the team must leave with.",
+    "source": "Hub refresh July 6"
   },
   {
-    "id": "meeting-placeholder-workshop-postmortem",
-    "title": "Workshop Post-Mortem and Marketing Review",
+    "id": "meeting-workshop-postmortem-funnel-reset",
+    "title": "Workshop Post-Mortem and Funnel Reset",
     "date": "TBD",
     "time": "From Google Calendar",
     "owner": "Andrew",
-    "department": "Marketing",
-    "purpose": "Review workshop performance, audience funnel, messaging, and next-cycle decisions.",
-    "source": "Google Calendar placeholder"
+    "department": "Marketing & Social",
+    "purpose": "Review July workshop performance, public cleanup proof, audience/funnel lessons, ad/listing/social data, website/tracking needs, and decisions required before future workshop dates or offers are announced.",
+    "source": "Hub refresh July 6"
+  },
+  {
+    "id": "meeting-andrew-richard-role-clarity",
+    "title": "Andrew/Richard Role-Clarity Conversation",
+    "date": "TBD",
+    "time": "From Google Calendar",
+    "owner": "Andrew",
+    "department": "Team Operations",
+    "purpose": "Clarify Richard's role lanes, recurring responsibilities, decision rights, escalation rules, and what should stop routing through Andrew by default.",
+    "source": "Hub refresh July 6"
   }
 ]
