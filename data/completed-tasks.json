@@ -1,11 +1,5 @@
 {
-  "completedTaskIds": [
-    "task-funding-report-automation",
-    "task-google-security-alert",
-    "task-ad-spend-proof-receipts",
-    "task-raffle-amazon-winner-proof",
-    "task-social-listing-cleanup"
-  ],
-  "updatedAt": "2026-07-02",
-  "note": "Task IDs in this list are hidden from the Hub while Andrew reviews completion status. This does not by itself mark a Cockpit task Completed."
+  "completedTaskIds": [],
+  "updatedAt": "2026-07-06",
+  "note": "Only task IDs with source-backed completion evidence should be listed here. Hub review-signal clicks do not add IDs here and do not hide tasks. Proof-sensitive items stay visible until Andrew accepts closure evidence."
 }
