@@ -3,72 +3,17 @@ const state = {
   meetings: [],
   resources: [],
   resourceMap: new Map(),
+  verifiedCompletedTaskIds: new Set(),
   selectedTaskId: null,
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260702-due-date-labels';
-const completedTaskStorageKey = 'dsgHubCompletedTaskIds';
+const dataVersion = '20260706-hub-refresh-review-flow';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
 
-const approvedIntakeTasks = [
-  {
-    id: 'task-admin-email-forwarding-login-migration',
-    title: 'Review Admin Email Forwarding and Login Migration',
-    department: 'Operations / Technology',
-    category: 'Admin Accounts',
-    project: 'Hub Intake Follow-Up',
-    status: 'Needs Review',
-    priority: 'High',
-    owner: 'Andrew',
-    support: 'Andrew only',
-    approves: 'Andrew',
-    due: 'This week',
-    tool: 'Gmail / Google Workspace Admin + account inventory + DSG GPT',
-    audience: 'Internal admin',
-    deliverable: 'Andrew reviews forwarding from rbaskin.dsg to admin@discoverysoundgarden.com, keeps any forwarded mail organized separately, and migrates account logins only where he approves the change.',
-    saveFinalIn: 'DSG Share Folder > Administration',
-    context: 'Hub intake suggested forwarding email from rbaskin.dsg to admin while keeping it separate, and updating account logins away from rbaskin.dsg. Andrew is the only person assigned to touch or approve this access-sensitive task.',
-    nextSteps: [
-      'Andrew inventories which accounts still use rbaskin.dsg and whether each account should move to admin@discoverysoundgarden.com.',
-      'Andrew decides whether forwarding is appropriate and how forwarded mail should be labeled or separated.',
-      'Andrew does not change passwords, ownership, recovery settings, or forwarding rules until he has chosen the exact account-by-account plan.',
-      'Save only a status note and approved migration list; do not put credentials in the Hub or Cockpit.',
-      'Keep this task Andrew-only unless Andrew explicitly assigns a support person later.'
-    ],
-    links: ['dsg-share-folder', 'dsg-gpt', 'dsg-brief-builder'],
-    prompt: 'In DSG GPT, create a safe admin email and login migration checklist for Andrew only. Cover rbaskin.dsg forwarding, label/separation rules, account inventory, approval before login changes, credential safety, save location, and what evidence should be recorded without exposing private account details.'
-  },
-  {
-    id: 'task-omari-insurance-business-law-review',
-    title: 'Assign Omari Insurance and Business Law Review',
-    department: 'Compliance',
-    category: 'Governance / Risk',
-    project: 'Hub Intake Follow-Up',
-    status: 'Needs Review',
-    priority: 'High',
-    owner: 'Omari',
-    support: 'Andrew / Clark if finance or compliance documents are needed',
-    approves: 'Andrew / Board if policy or filing decisions are required',
-    due: 'Start this week; target one week or sooner',
-    tool: 'Google Docs + DSG GPT + official compliance resources',
-    audience: 'Internal leadership / board if decisions are needed',
-    deliverable: 'A short review note on insurance needs and business-law obligations DSG may need to address, including harassment, sexual harassment, bullying, and labor-law posting requirements.',
-    saveFinalIn: 'DSG Share Folder > Finance and Leadership & Strategy',
-    context: 'Hub intake asked Omari to look into insurance DSG needs or may not need, and what business laws need coverage. Treat this as scoped research, not a legal conclusion or automatic policy adoption.',
-    nextSteps: [
-      'Confirm the scope Andrew wants Omari to review first: insurance, workplace policies, labor-law postings, or all of the above.',
-      'Collect current DSG facts that affect applicability, such as employees, contractors, volunteers, events, board roles, and public programming.',
-      'Use official or professional sources and clearly separate confirmed requirements from questions for counsel or the board.',
-      'Prepare a short findings note with recommended next actions and decision owners.',
-      'Escalate any policy, insurance purchase, filing, or legal-risk decision to Andrew and the board as appropriate.'
-    ],
-    links: ['ny-charities', 'irs-nonprofits', 'stay-exempt', 'dsg-share-folder', 'dsg-gpt', 'dsg-brief-builder'],
-    prompt: 'In DSG GPT, create a scoped research brief for Omari on DSG insurance and business-law obligations. Include likely questions around insurance, harassment, sexual harassment, bullying, labor-law postings, nonprofit governance, what facts are needed before conclusions, official-source rules, owner/support/approver, due timing, and a short findings-note format. Do not present legal advice as final.'
-  }
-];
+const approvedIntakeTasks = [];
 
 const resourceGroups = [
   { title: 'Brand, Voice & Briefs', note: 'Use before anything public-facing or review-ready.', resources: ['dsg-brand-kit', 'dsg-brief-builder', 'dsg-website', 'dsg-gpt'] },
@@ -100,14 +45,19 @@ const els = {
 };
 
 async function loadData() {
-  const [tasksResponse, resourcesResponse, meetingsResponse] = await Promise.all([
+  const [tasksResponse, resourcesResponse, meetingsResponse, completedResponse] = await Promise.all([
     fetch(`data/tasks.json?v=${dataVersion}`),
     fetch(`data/resources.json?v=${dataVersion}`),
-    fetch(`data/meetings.json?v=${dataVersion}`).catch(() => null)
+    fetch(`data/meetings.json?v=${dataVersion}`).catch(() => null),
+    fetch(`data/completed-tasks.json?v=${dataVersion}`).catch(() => null)
   ]);
   if (!tasksResponse.ok || !resourcesResponse.ok) {
     throw new Error('Could not load hub data. If previewing locally, serve the folder with a simple local web server.');
   }
+
+  const completedPayload = completedResponse && completedResponse.ok ? await completedResponse.json() : { completedTaskIds: [] };
+  state.verifiedCompletedTaskIds = new Set(Array.isArray(completedPayload.completedTaskIds) ? completedPayload.completedTaskIds : []);
+
   const loadedTasks = await tasksResponse.json();
   state.tasks = [...loadedTasks, ...approvedIntakeTasks].filter(isVisibleTask);
   state.resources = await resourcesResponse.json();
@@ -129,40 +79,17 @@ function isActiveTask(task) {
   return !inactiveStatuses.has(normalizeStatus(task.status));
 }
 
-function readCompletedTaskIds() {
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(completedTaskStorageKey) || '[]');
-    return new Set(Array.isArray(saved) ? saved : []);
-  } catch (error) {
-    return new Set();
-  }
-}
-
-function writeCompletedTaskIds(taskIds) {
-  try {
-    window.localStorage.setItem(completedTaskStorageKey, JSON.stringify([...taskIds]));
-  } catch (error) {
-    // Ignore storage errors; the email confirmation still remains the source for Andrew's review.
-  }
-}
-
-function rememberCompletedTask(taskId) {
-  const taskIds = readCompletedTaskIds();
-  taskIds.add(taskId);
-  writeCompletedTaskIds(taskIds);
-}
-
 function isVisibleTask(task) {
-  return isActiveTask(task) && !readCompletedTaskIds().has(task.id);
+  return isActiveTask(task) && !state.verifiedCompletedTaskIds.has(task.id);
 }
 
 function getActiveTasks() {
-  return state.tasks.filter(isActiveTask);
+  return state.tasks.filter(isActiveTask).filter(task => !state.verifiedCompletedTaskIds.has(task.id));
 }
 
 function splitPeople(value) {
   const source = String(value || '');
-  return teamMembers.filter(person => new RegExp(`\b${person}\b`, 'i').test(source));
+  return teamMembers.filter(person => new RegExp(`\\b${person}\\b`, 'i').test(source));
 }
 
 function getPeople() {
@@ -300,7 +227,7 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Confirm step complete</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Confirming a step complete sends Andrew a note and removes the task from this browser's Hub view.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Submit completion for Andrew review</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Submitting completion emails Andrew a review signal; it does not hide the task or mark it complete. Tasks disappear only when their status is inactive in the source data or their ID is added to verified completed tasks after evidence review.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
@@ -358,12 +285,12 @@ function renderResources() {
 }
 
 async function handleStepComplete(event, task) {
-  const confirmed = window.confirm(`Are you sure this step is complete?\n\n${task.title}`);
+  const confirmed = window.confirm(`Submit this completion signal for Andrew review?\n\nThis will not hide or close the task.\n\n${task.title}`);
   if (!confirmed) return;
   const button = event.currentTarget;
   const status = els.taskDetail.querySelector('.completion-status');
   const formData = new FormData();
-  formData.append('_subject', `DSG Hub step complete: ${task.title}`);
+  formData.append('_subject', `DSG Hub completion review: ${task.title}`);
   formData.append('_template', 'table');
   formData.append('_captcha', 'false');
   formData.append('Page', window.location.href);
@@ -372,9 +299,9 @@ async function handleStepComplete(event, task) {
   formData.append('Owner', task.owner);
   formData.append('Approves', task.approves);
   formData.append('Save final in', task.saveFinalIn);
-  formData.append('Status requested', 'Step complete confirmation submitted from the Hub. Andrew should review before any Cockpit status change.');
+  formData.append('Status requested', 'Completion signal submitted from the Hub. Andrew must review evidence before any Cockpit status change or verified completed-task update.');
 
-  status.textContent = 'Sending step complete note...';
+  status.textContent = 'Sending completion review note...';
   button.disabled = true;
   try {
     const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', {
@@ -382,15 +309,11 @@ async function handleStepComplete(event, task) {
       headers: { Accept: 'application/json' },
       body: formData
     });
-    if (!response.ok) throw new Error('Step complete failed');
-    rememberCompletedTask(task.id);
-    state.tasks = state.tasks.filter(activeTask => activeTask.id !== task.id);
-    state.selectedTaskId = null;
-    populateFilters();
-    renderAndrewWork();
-    render();
+    if (!response.ok) throw new Error('Completion review submission failed');
+    status.textContent = 'Sent to Andrew for review. This task stays visible until evidence is accepted.';
   } catch (error) {
     status.textContent = 'Could not send. Please try again in a moment.';
+  } finally {
     button.disabled = false;
   }
 }
