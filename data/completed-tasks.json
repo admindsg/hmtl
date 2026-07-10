@@ -1,5 +1,5 @@
 {
   "completedTaskIds": [],
-  "updatedAt": "2026-07-06",
-  "note": "Only task IDs with source-backed completion evidence should be listed here. Hub review-signal clicks do not add IDs here and do not hide tasks. Proof-sensitive items stay visible until Andrew accepts closure evidence."
+  "updatedAt": "2026-07-10",
+  "note": "Task IDs listed here stay hidden on reload. Hub completion clicks also hide the task immediately in the current browser session and send FormSubmit email with two completion verification fields so the next Cockpit scan can mark the task Complete and archive it from active Cockpit tabs."
 }
