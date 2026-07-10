@@ -1,32 +1,57 @@
 [
   {
-    "id": "meeting-august-september-focus",
-    "title": "August/September Focus Meeting",
-    "date": "TBD",
-    "time": "From Google Calendar",
+    "id": "calendar-16ti6mm2kg3i4tma0omc889hd7",
+    "title": "August/September Focus + Operating Plan Meeting",
+    "date": "Friday, July 10, 2026",
+    "time": "3:00 PM-4:00 PM ET",
     "owner": "Andrew",
     "department": "Team Operations",
-    "purpose": "Decide what August/September should accomplish, how programming and audience strategy work together, what operating structure needs to change, and what concrete outputs the team must leave with.",
-    "source": "Hub refresh July 6"
+    "purpose": "Use this meeting to align August/September focus, operating structure, programming, audience strategy, and the concrete outputs the team should leave with.",
+    "source": "Google Calendar shared DSG calendar, refreshed July 10, 2026 at 11:06 AM ET",
+    "calendarUrl": "https://calendar.google.com/calendar/u/0?cid=Y19mMWRkNTY4ZjYzMzA1ZTFmY2IwNGJiZjIwZmQ2NWM2MmZhYTQ0ZDVjOTI3ZWNiMDU3NTYxOGViYzdhNWQ4NzY5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
   },
   {
-    "id": "meeting-workshop-postmortem-funnel-reset",
-    "title": "Workshop Post-Mortem and Funnel Reset",
-    "date": "TBD",
-    "time": "From Google Calendar",
-    "owner": "Andrew",
-    "department": "Marketing & Social",
-    "purpose": "Review July workshop performance, public cleanup proof, audience/funnel lessons, ad/listing/social data, website/tracking needs, and decisions required before future workshop dates or offers are announced.",
-    "source": "Hub refresh July 6"
+    "id": "calendar-40i6l5gmf30l4i49qcnsjc1fbh-20260713",
+    "title": "DSG - Check-In OD/AW/KB",
+    "date": "Monday, July 13, 2026",
+    "time": "4:00 PM-4:30 PM ET",
+    "owner": "Andrew / Omari / Karena",
+    "department": "Team Operations",
+    "purpose": "Recurring check-in for DSG operating follow-through. Use current Hub tasks and Cockpit blockers as the agenda source.",
+    "source": "Google Calendar shared DSG calendar, refreshed July 10, 2026 at 11:06 AM ET",
+    "calendarUrl": "https://calendar.google.com/calendar/u/0?cid=Y19mMWRkNTY4ZjYzMzA1ZTFmY2IwNGJiZjIwZmQ2NWM2MmZhYTQ0ZDVjOTI3ZWNiMDU3NTYxOGViYzdhNWQ4NzY5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
   },
   {
-    "id": "meeting-andrew-richard-role-clarity",
-    "title": "Andrew/Richard Role-Clarity Conversation",
-    "date": "TBD",
-    "time": "From Google Calendar",
+    "id": "calendar-02ravsff1m4i2j4spj74tgqlgn-20260714",
+    "title": "DSG Meeting",
+    "date": "Tuesday, July 14, 2026",
+    "time": "3:00 PM-4:00 PM ET",
     "owner": "Andrew",
     "department": "Team Operations",
-    "purpose": "Clarify Richard's role lanes, recurring responsibilities, decision rights, escalation rules, and what should stop routing through Andrew by default.",
-    "source": "Hub refresh July 6"
+    "purpose": "General DSG meeting time. Check the shared calendar entry and current Hub priorities before adding or assuming an agenda.",
+    "source": "Google Calendar shared DSG calendar, refreshed July 10, 2026 at 11:06 AM ET",
+    "calendarUrl": "https://calendar.google.com/calendar/u/0?cid=Y19mMWRkNTY4ZjYzMzA1ZTFmY2IwNGJiZjIwZmQ2NWM2MmZhYTQ0ZDVjOTI3ZWNiMDU3NTYxOGViYzdhNWQ4NzY5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
+  },
+  {
+    "id": "calendar-1k4lomnrs3n4oe9n5t6gpc343r",
+    "title": "DSG: Grant Conversation",
+    "date": "Friday, July 17, 2026",
+    "time": "11:00 AM-12:00 PM ET",
+    "owner": "Andrew / Omari",
+    "department": "Development / Funding",
+    "purpose": "Grant conversation. Bring current funding materials, grant-folder context, and any decision points that affect development follow-through.",
+    "source": "Google Calendar shared DSG calendar, refreshed July 10, 2026 at 11:06 AM ET",
+    "calendarUrl": "https://calendar.google.com/calendar/u/0?cid=Y19mMWRkNTY4ZjYzMzA1ZTFmY2IwNGJiZjIwZmQ2NWM2MmZhYTQ0ZDVjOTI3ZWNiMDU3NTYxOGViYzdhNWQ4NzY5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
+  },
+  {
+    "id": "calendar-40i6l5gmf30l4i49qcnsjc1fbh-20260720",
+    "title": "DSG - Check-In OD/AW/KB",
+    "date": "Monday, July 20, 2026",
+    "time": "4:00 PM-4:30 PM ET",
+    "owner": "Andrew / Omari / Karena",
+    "department": "Team Operations",
+    "purpose": "Recurring check-in for DSG operating follow-through. Use current Hub tasks and Cockpit blockers as the agenda source.",
+    "source": "Google Calendar shared DSG calendar, refreshed July 10, 2026 at 11:06 AM ET",
+    "calendarUrl": "https://calendar.google.com/calendar/u/0?cid=Y19mMWRkNTY4ZjYzMzA1ZTFmY2IwNGJiZjIwZmQ2NWM2MmZhYTQ0ZDVjOTI3ZWNiMDU3NTYxOGViYzdhNWQ4NzY5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
   }
 ]
