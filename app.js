@@ -8,7 +8,7 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260710-completion-hide-flow';
+const dataVersion = '20260710-calendar-refresh';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
@@ -259,7 +259,12 @@ function renderMeetings() {
     els.meetingsList.innerHTML = '<div class="empty-state">No meetings loaded yet.</div>';
     return;
   }
-  els.meetingsList.innerHTML = state.meetings.map(meeting => `<article class="meeting-card"><strong>${escapeHtml(meeting.title)}</strong><span>${escapeHtml(meeting.date)} · ${escapeHtml(meeting.time)}</span><p>${escapeHtml(meeting.purpose)}</p></article>`).join('');
+  els.meetingsList.innerHTML = state.meetings.map(meeting => {
+    const metadata = [meeting.department, meeting.owner].filter(Boolean).join(' · ');
+    const source = meeting.source ? `<span class="meeting-source">${escapeHtml(meeting.source)}</span>` : '';
+    const link = meeting.calendarUrl ? `<a href="${escapeHtml(meeting.calendarUrl)}" target="_blank" rel="noreferrer">Open shared calendar</a>` : '';
+    return `<article class="meeting-card"><strong>${escapeHtml(meeting.title)}</strong><span>${escapeHtml(meeting.date)} · ${escapeHtml(meeting.time)}</span>${metadata ? `<span>${escapeHtml(metadata)}</span>` : ''}<p>${escapeHtml(meeting.purpose)}</p>${source}${link}</article>`;
+  }).join('');
 }
 
 function renderResources() {
