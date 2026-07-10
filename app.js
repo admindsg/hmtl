@@ -8,11 +8,10 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260706-hub-refresh-review-flow';
+const dataVersion = '20260710-completion-hide-flow';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
-
 const approvedIntakeTasks = [];
 
 const resourceGroups = [
@@ -84,16 +83,12 @@ function isVisibleTask(task) {
 }
 
 function getActiveTasks() {
-  return state.tasks.filter(isActiveTask).filter(task => !state.verifiedCompletedTaskIds.has(task.id));
+  return state.tasks.filter(isVisibleTask);
 }
 
 function splitPeople(value) {
   const source = String(value || '');
   return teamMembers.filter(person => new RegExp(`\\b${person}\\b`, 'i').test(source));
-}
-
-function getPeople() {
-  return teamMembers;
 }
 
 function addOptions(select, values) {
@@ -108,7 +103,7 @@ function addOptions(select, values) {
 
 function populateFilters() {
   const activeTasks = getActiveTasks();
-  addOptions(els.personFilter, getPeople());
+  addOptions(els.personFilter, teamMembers);
   addOptions(els.departmentFilter, [...new Set(activeTasks.map(task => task.department || task.category).filter(Boolean))].sort());
 }
 
@@ -227,7 +222,7 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Submit completion for Andrew review</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Click a task to load one set of marching orders. Submitting completion emails Andrew a review signal; it does not hide the task or mark it complete. Tasks disappear only when their status is inactive in the source data or their ID is added to verified completed tasks after evidence review.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Mark complete and remove from Hub</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Use the button only when the task is finished. The confirmation step records two completion checks, emails the Cockpit intake, and removes the task from this Hub view. The next Cockpit scan should mark the matching task Complete and archive it from active Cockpit tabs.</p></article>`;
   els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
@@ -285,23 +280,34 @@ function renderResources() {
 }
 
 async function handleStepComplete(event, task) {
-  const confirmed = window.confirm(`Submit this completion signal for Andrew review?\n\nThis will not hide or close the task.\n\n${task.title}`);
+  const confirmed = window.confirm(`Mark this task complete and remove it from the Hub?\n\nTwo checks will be recorded:\n1. The deliverable is complete.\n2. Required evidence or final location is saved.\n\n${task.title}`);
   if (!confirmed) return;
+
   const button = event.currentTarget;
   const status = els.taskDetail.querySelector('.completion-status');
+  const completedAt = new Date().toISOString();
   const formData = new FormData();
-  formData.append('_subject', `DSG Hub completion review: ${task.title}`);
+  formData.append('_subject', `DSG Hub completed task: ${task.title}`);
   formData.append('_template', 'table');
   formData.append('_captcha', 'false');
   formData.append('Page', window.location.href);
   formData.append('Task ID', task.id);
   formData.append('Task title', task.title);
+  formData.append('Department', task.department || task.category || '');
   formData.append('Owner', task.owner);
+  formData.append('Support', task.support);
   formData.append('Approves', task.approves);
   formData.append('Save final in', task.saveFinalIn);
-  formData.append('Status requested', 'Completion signal submitted from the Hub. Andrew must review evidence before any Cockpit status change or verified completed-task update.');
+  formData.append('Completed at', completedAt);
+  formData.append('Cockpit status requested', 'Complete');
+  formData.append('Cockpit action requested', 'Archive from active Cockpit tabs during the next scan.');
+  formData.append('Hub action taken', 'Task removed from Hub view after two-step completion confirmation.');
+  formData.append('Verification 1', 'Complete: submitter confirmed the deliverable or operational outcome is finished.');
+  formData.append('Verification 2', 'Complete: submitter confirmed required evidence, proof, or final save location is available.');
+  formData.append('Completion evidence', `Hub two-step completion confirmation. Save-final location: ${task.saveFinalIn || 'not listed'}.`);
+  formData.append('Cockpit backlink field', task.id);
 
-  status.textContent = 'Sending completion review note...';
+  status.textContent = 'Recording completion...';
   button.disabled = true;
   try {
     const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', {
@@ -309,10 +315,15 @@ async function handleStepComplete(event, task) {
       headers: { Accept: 'application/json' },
       body: formData
     });
-    if (!response.ok) throw new Error('Completion review submission failed');
-    status.textContent = 'Sent to Andrew for review. This task stays visible until evidence is accepted.';
+    if (!response.ok) throw new Error('Completion submission failed');
+    state.verifiedCompletedTaskIds.add(task.id);
+    state.tasks = state.tasks.filter(item => item.id !== task.id);
+    state.selectedTaskId = filteredTasks()[0]?.id || null;
+    populateFilters();
+    renderAndrewWork();
+    render();
   } catch (error) {
-    status.textContent = 'Could not send. Please try again in a moment.';
+    status.textContent = 'Could not record completion. Please try again in a moment.';
   } finally {
     button.disabled = false;
   }
@@ -338,7 +349,7 @@ async function handleSuggestionSubmit(event) {
     });
     if (!response.ok) throw new Error('Submission failed');
     els.suggestTaskForm.reset();
-    els.suggestionStatus.textContent = 'Suggestion emailed to Andrew for Cockpit review.';
+    els.suggestionStatus.textContent = 'Suggestion emailed for Cockpit review.';
   } catch (error) {
     els.suggestionStatus.textContent = 'Could not submit. Please try again in a moment.';
   } finally {
