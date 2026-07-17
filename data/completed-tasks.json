@@ -1,5 +1,5 @@
 {
   "completedTaskIds": [],
-  "updatedAt": "2026-07-10",
-  "note": "Task IDs listed here stay hidden on reload. Hub completion clicks also hide the task immediately in the current browser session and send FormSubmit email with two completion verification fields so the next Cockpit scan can mark the task Complete and archive it from active Cockpit tabs."
+  "updatedAt": "2026-07-16",
+  "note": "Only add task IDs here after completion evidence, Verification 1, Verification 2, and a Cockpit backlink/source reference are present. Hub review clicks are Andrew-review signals only; they should not hide tasks or request Cockpit completion by themselves."
 }
