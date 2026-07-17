@@ -8,17 +8,17 @@ const state = {
   filters: { search: '', person: 'all', department: 'all' }
 };
 
-const dataVersion = '20260710-calendar-refresh';
+const dataVersion = '20260716-action-tracker-refresh';
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
-const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved']);
+const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved', 'parked', 'deferred']);
 const approvedIntakeTasks = [];
 
 const resourceGroups = [
   { title: 'Brand, Voice & Briefs', note: 'Use before anything public-facing or review-ready.', resources: ['dsg-brand-kit', 'dsg-brief-builder', 'dsg-website', 'dsg-gpt'] },
-  { title: 'Marketing & Social', note: 'Social channels, scheduling, audience engagement, and campaign learning.', resources: ['dsg-instagram', 'dsg-linkedin', 'meta-business-suite', 'buffer', 'manychat', 'canva', 'getting-in-on-the-act', 'barun-audience-engagement', 'youtube-experience-video'] },
+  { title: 'Marketing & Social', note: 'Social channels, access, scheduling, audience engagement, and campaign learning.', resources: ['dsg-instagram', 'dsg-linkedin', 'meta-business-suite', 'buffer', 'manychat', 'canva', 'getting-in-on-the-act', 'barun-audience-engagement', 'youtube-experience-video'] },
   { title: 'Development & Funding', note: 'Funding work, funder-facing language, and staged grant materials.', resources: ['grants-folder', 'dsg-brand-kit', 'dsg-brief-builder', 'dsg-share-folder'] },
-  { title: 'Programming & Registrants', note: 'Workshop communication, participant follow-up, and program records.', resources: ['zeffy', 'dsg-gpt', 'dsg-brand-kit', 'dsg-share-folder', 'getting-in-on-the-act'] },
+  { title: 'Programming & Registrants', note: 'Participant follow-up, program records, and Vanguard Voices planning.', resources: ['zeffy', 'dsg-gpt', 'dsg-brand-kit', 'dsg-share-folder', 'getting-in-on-the-act'] },
   { title: 'Compliance, Finance & Admin', note: 'Filing, receipts, finance cleanup, and administrative reference.', resources: ['ny-charities', 'irs-nonprofits', 'stay-exempt', 'relay', 'dsg-share-folder'] },
   { title: 'AI Prompt Support', note: 'Prompt examples and reusable AI workflow inspiration.', resources: ['complete-ai-bundle', 'chatgpt-mega-prompt-bundle', 'dsg-gpt', 'dsg-brief-builder'] },
   { title: 'Experience Design & UX', note: 'Useful when shaping audience journeys, hub structure, or workshop experience.', resources: ['ux-design-process', 'hbr-new-experience-economy', 'experience-economy-wiki', 'hbr-welcome-experience-economy', 'participations-wlazel', 'getting-in-on-the-act'] }
@@ -112,7 +112,13 @@ function getSearchText(task) {
     .map(linkId => state.resourceMap.get(linkId))
     .filter(Boolean)
     .map(resource => `${resource.label} ${resource.category} ${resource.tool} ${resource.useWhen}`);
-  return [task.title, task.department, task.category, task.project, task.status, task.priority, task.owner, task.support, task.approves, task.due, task.tool, task.audience, task.deliverable, task.saveFinalIn, task.context, task.prompt, ...(task.nextSteps || []), ...linkedResources].join(' ').toLowerCase();
+  return [
+    task.title, task.department, task.category, task.project, task.status, task.priority,
+    task.owner, task.support, task.approves, task.due, task.tool, task.audience,
+    task.deliverable, task.saveFinalIn, task.context, task.requiredEvidence,
+    task.verification1, task.verification2, task.cockpitBacklink, task.prompt,
+    ...(task.nextSteps || []), ...linkedResources
+  ].join(' ').toLowerCase();
 }
 
 function formatDueLabel(value) {
@@ -142,7 +148,7 @@ function formatDueLabel(value) {
     }
   }
 
-  return 'Due: Ask';
+  return `Due: ${source}`;
 }
 
 function personMatches(task, person) {
@@ -220,15 +226,24 @@ function renderTaskDetail(task) {
     els.taskDetail.innerHTML = '<div class="empty-state">Choose an active task to see the details.</div>';
     return;
   }
-  const links = (task.links || []).map(linkId => state.resourceMap.get(linkId)).filter(Boolean).map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
+  const links = (task.links || [])
+    .map(linkId => state.resourceMap.get(linkId))
+    .filter(Boolean)
+    .map(resource => `<a href="${resource.url}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`)
+    .join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Mark complete and remove from Hub</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> Use the button only when the task is finished. The confirmation step records two completion checks, emails the Cockpit intake, and removes the task from this Hub view. The next Cockpit scan should mark the matching task Complete and archive it from active Cockpit tabs.</p></article>`;
-  els.taskDetail.querySelector('.copy-button').addEventListener('click', async event => {
+  const requiredEvidence = task.requiredEvidence || 'Save the source-backed proof or blocker note before requesting closure.';
+  const verification1 = task.verification1 || 'Reviewer 1 confirms the deliverable or outcome is actually complete.';
+  const verification2 = task.verification2 || 'Reviewer 2 confirms leadership, owner, or approval closure.';
+  const cockpitBacklink = task.cockpitBacklink || task.id;
+
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><dl class="meta-grid"><div><dt>Required evidence</dt><dd>${escapeHtml(requiredEvidence)}</dd></div><div><dt>Verification 1</dt><dd>${escapeHtml(verification1)}</dd></div><div><dt>Verification 2</dt><dd>${escapeHtml(verification2)}</dd></div><div><dt>Cockpit backlink</dt><dd>${escapeHtml(cockpitBacklink)}</dd></div></dl><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt)}</p><button class="copy-button prompt-copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Submit for Andrew review</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> This sends a review signal only. The task stays visible until completion evidence, Verification 1, Verification 2, and the Cockpit backlink are confirmed in the Cockpit.</p></article>`;
+  els.taskDetail.querySelector('.prompt-copy-button').addEventListener('click', async event => {
     await navigator.clipboard.writeText(task.prompt);
     event.currentTarget.textContent = 'Copied';
     setTimeout(() => { event.currentTarget.textContent = 'Copy prompt'; }, 1200);
   });
-  els.taskDetail.querySelector('.step-complete-button').addEventListener('click', event => handleStepComplete(event, task));
+  els.taskDetail.querySelector('.step-complete-button').addEventListener('click', event => handleReviewSubmit(event, task));
 }
 
 function renderAndrewWork() {
@@ -256,7 +271,7 @@ function renderAndrewWork() {
 function renderMeetings() {
   if (!els.meetingsList) return;
   if (!state.meetings.length) {
-    els.meetingsList.innerHTML = '<div class="empty-state">No meetings loaded yet.</div>';
+    els.meetingsList.innerHTML = '<div class="empty-state">No upcoming shared-calendar meetings loaded. Check Google Calendar before assuming timing.</div>';
     return;
   }
   els.meetingsList.innerHTML = state.meetings.map(meeting => {
@@ -284,15 +299,15 @@ function renderResources() {
   });
 }
 
-async function handleStepComplete(event, task) {
-  const confirmed = window.confirm(`Mark this task complete and remove it from the Hub?\n\nTwo checks will be recorded:\n1. The deliverable is complete.\n2. Required evidence or final location is saved.\n\n${task.title}`);
+async function handleReviewSubmit(event, task) {
+  const confirmed = window.confirm(`Submit this task for Andrew review?\n\nThis will not hide the task or request Cockpit completion.\n\n${task.title}`);
   if (!confirmed) return;
 
   const button = event.currentTarget;
   const status = els.taskDetail.querySelector('.completion-status');
-  const completedAt = new Date().toISOString();
+  const submittedAt = new Date().toISOString();
   const formData = new FormData();
-  formData.append('_subject', `DSG Hub completed task: ${task.title}`);
+  formData.append('_subject', `DSG Hub review signal: ${task.title}`);
   formData.append('_template', 'table');
   formData.append('_captcha', 'false');
   formData.append('Page', window.location.href);
@@ -303,16 +318,16 @@ async function handleStepComplete(event, task) {
   formData.append('Support', task.support);
   formData.append('Approves', task.approves);
   formData.append('Save final in', task.saveFinalIn);
-  formData.append('Completed at', completedAt);
-  formData.append('Cockpit status requested', 'Complete');
-  formData.append('Cockpit action requested', 'Archive from active Cockpit tabs during the next scan.');
-  formData.append('Hub action taken', 'Task removed from Hub view after two-step completion confirmation.');
-  formData.append('Verification 1', 'Complete: submitter confirmed the deliverable or operational outcome is finished.');
-  formData.append('Verification 2', 'Complete: submitter confirmed required evidence, proof, or final save location is available.');
-  formData.append('Completion evidence', `Hub two-step completion confirmation. Save-final location: ${task.saveFinalIn || 'not listed'}.`);
-  formData.append('Cockpit backlink field', task.id);
+  formData.append('Submitted at', submittedAt);
+  formData.append('Cockpit status requested', 'Review only');
+  formData.append('Cockpit action requested', 'Andrew review signal. Do not mark complete unless completion evidence, Verification 1, Verification 2, and Cockpit backlink are confirmed.');
+  formData.append('Hub action taken', 'No task hiding. No shared completion update.');
+  formData.append('Required evidence', task.requiredEvidence || 'Evidence not listed in task data.');
+  formData.append('Verification 1', task.verification1 || 'Reviewer 1 must confirm completion.');
+  formData.append('Verification 2', task.verification2 || 'Reviewer 2/approver must confirm closure.');
+  formData.append('Cockpit backlink field', task.cockpitBacklink || task.id);
 
-  status.textContent = 'Recording completion...';
+  status.textContent = 'Submitting review signal...';
   button.disabled = true;
   try {
     const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', {
@@ -320,15 +335,10 @@ async function handleStepComplete(event, task) {
       headers: { Accept: 'application/json' },
       body: formData
     });
-    if (!response.ok) throw new Error('Completion submission failed');
-    state.verifiedCompletedTaskIds.add(task.id);
-    state.tasks = state.tasks.filter(item => item.id !== task.id);
-    state.selectedTaskId = filteredTasks()[0]?.id || null;
-    populateFilters();
-    renderAndrewWork();
-    render();
+    if (!response.ok) throw new Error('Review submission failed');
+    status.textContent = 'Sent for Andrew review. The task stays visible until verified closed.';
   } catch (error) {
-    status.textContent = 'Could not record completion. Please try again in a moment.';
+    status.textContent = 'Could not submit review signal. Please try again in a moment.';
   } finally {
     button.disabled = false;
   }
