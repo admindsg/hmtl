@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DSG Communications Hub Prototype</title>
+  <title>DSG Communications Hub</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260710-calendar-refresh" />
+  <link rel="stylesheet" href="styles.css?v=20260716-action-tracker-refresh" />
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
       <div class="eyebrow">Discovery Sound Garden</div>
       <h1>Find the next thing.</h1>
-      <p class="lede">Choose a person or department, pick one task, then use the links and prompt to move it forward.</p>
+      <p class="lede">Choose a person or department, pick one task, then use the links, evidence notes, and prompt to move it forward.</p>
       <div class="header-actions">
         <a class="button secondary" href="https://docs.google.com/document/d/1gDlTZHeX_KPWyOzzKfEwM41gIgzBMZjXakvno6OH2a0" target="_blank" rel="noreferrer">Brand Kit</a>
         <a class="button secondary" href="https://drive.google.com/drive/folders/1i8yx3UiUd85OW7equ5bGluUMIJllX_B1" target="_blank" rel="noreferrer">Share Folder</a>
@@ -29,7 +29,7 @@
       <div class="quick-heading">
         <div>
           <div class="eyebrow dark">Quick scan</div>
-          <h2 id="quick-glance-title">This week and priority this week.</h2>
+          <h2 id="quick-glance-title">Current Action Tracker priorities.</h2>
         </div>
         <p>Click a task to open the full details below.</p>
       </div>
@@ -40,7 +40,7 @@
 
     <section class="search-card" aria-label="Find tasks">
       <label class="search-label" for="searchInput">Search</label>
-      <input id="searchInput" type="search" placeholder="Try: Richard, Zeffy, Brand Kit, Funding, Workshop..." />
+      <input id="searchInput" type="search" placeholder="Try: Richard, Zeffy, Google, Meta, Vanguard, ST-119.2..." />
       <div class="lane-row">
         <label>
           My lane
@@ -82,7 +82,7 @@
           <div class="eyebrow dark">Team input</div>
           <h2 id="suggest-task-title">Suggest a task</h2>
         </div>
-        <p>Send Andrew a quick note with whatever context you have. He can review it before adding anything to the Hub.</p>
+        <p>Send Andrew a quick note with whatever context you have. He can review it before adding anything to the Action Tracker or Hub.</p>
       </div>
       <form id="suggestTaskForm" class="suggest-task-form" action="https://formsubmit.co/ajax/admin@discoverysoundgarden.com" method="POST">
         <input type="hidden" name="_subject" value="DSG Hub task suggestion">
@@ -123,6 +123,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260710-calendar-refresh"></script>
+  <script src="app.js?v=20260716-action-tracker-refresh"></script>
 </body>
 </html>
