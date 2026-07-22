@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260722-completion-flow" />
+  <link rel="stylesheet" href="styles.css?v=20260722-hub-sync" />
 </head>
 <body>
   <header class="site-header">
@@ -50,6 +50,11 @@
           Department
           <select id="departmentFilter"><option value="all">All departments</option></select>
         </label>
+      </div>
+      <div class="form-actions">
+        <button id="syncCockpitButton" type="button">Pull from Cockpit</button>
+        <button id="syncSettingsButton" type="button" class="secondary">Set Cockpit Sync URL</button>
+        <p id="syncStatus" role="status" aria-live="polite"></p>
       </div>
     </section>
 
@@ -123,6 +128,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260722-completion-flow"></script>
+  <script src="app.js?v=20260722-hub-sync"></script>
 </body>
 </html>
