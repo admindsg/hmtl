@@ -1,13 +1,1 @@
-[
-  {
-    "id": "calendar-40i6l5gmf30l4i49qcnsjc1fbh-20260720",
-    "title": "DSG - Check-In OD/AW/KB",
-    "date": "Monday, July 20, 2026",
-    "time": "4:00 PM-4:30 PM ET",
-    "owner": "Andrew / Omari / Karena",
-    "department": "Team Operations",
-    "purpose": "Recurring check-in for DSG operating follow-through. Use the current Action Tracker and Hub blockers as the agenda source.",
-    "source": "Shared Google Calendar evidence from prior refresh; July 16 Cockpit correction says Vaughn/grant lane is parked and past July 10/13/14 meetings should not remain active.",
-    "calendarUrl": "https://calendar.google.com/calendar/u/0?cid=Y19mMWRkNTY4ZjYzMzA1ZTFmY2IwNGJiZjIwZmQ2NWM2MmZhYTQ0ZDVjOTI3ZWNiMDU3NTYxOGViYzdhNWQ4NzY5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
-  }
-]
+[{"id":"calendar-omari-zoom-20260723","title":"Omari Dear Zoom Meeting","date":"Thursday, July 23, 2026","time":"4:00 PM ET","owner":"Andrew / Omari","department":"Team Operations / Compliance","purpose":"Review RSVP/status and agenda needs. Confirm whether this meeting is only a check-in or whether it needs compliance-calendar decision prep.","source":"Google Calendar scan 2026-07-22; Today and This Week both show needsAction status.","calendarUrl":"https://calendar.google.com/calendar/u/0/r"},{"id":"calendar-dsg-history-20260724","title":"DSG History","date":"Friday, July 24, 2026","time":"11:00 AM ET","owner":"Andrew","department":"Team Operations / Leadership","purpose":"Review RSVP/status and any prep or follow-up needs. Do not assume it is a board vote or compliance-calendar forum unless Omari/Board Secretary confirms.","source":"Google Calendar scan 2026-07-22; Today and This Week both show needsAction status.","calendarUrl":"https://calendar.google.com/calendar/u/0/r"}]
