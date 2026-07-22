@@ -1,5 +1,1 @@
-{
-  "completedTaskIds": [],
-  "updatedAt": "2026-07-16",
-  "note": "Only add task IDs here after completion evidence, Verification 1, Verification 2, and a Cockpit backlink/source reference are present. Hub review clicks are Andrew-review signals only; they should not hide tasks or request Cockpit completion by themselves."
-}
+{"completedTaskIds":[],"updatedAt":"2026-07-22","note":"Task IDs listed here are globally hidden from the Hub. The Hub also hides a task immediately in the user's browser after the user confirms Mark finished. A backend sync, scheduled agent pass, or Apps Script endpoint should add confirmed completed task IDs here and update the Cockpit so the task stays gone for everyone."}
