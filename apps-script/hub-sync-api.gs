@@ -8,27 +8,26 @@ Purpose:
 - Completion emails can stay in place as a backup/audit signal.
 
 Install:
-1. Open the DSG Leadership Cockpit spreadsheet.
+1. Open the DSG Leadership Cockpit spreadsheet from the admin account.
 2. Go to Extensions > Apps Script.
-3. Paste this file into a new script file and save.
-4. Optional but recommended: set syncKey below to a private short phrase.
+3. Replace the Hub sync .gs file with this full script.
+4. Set syncKey below to a private phrase.
 5. Deploy as a Web App: Execute as Me; access Anyone with the link.
-6. In the Hub, click Set Cockpit Sync URL and paste the Web App URL.
-   If syncKey is set, append it to the URL as ?key=YOUR_KEY.
+6. In the Hub, click Set Cockpit Sync URL and paste:
+   WEB_APP_URL?key=YOUR_KEY
 */
 
 const DSG_HUB_SYNC_CONFIG = {
-  spreadsheetId: '1znq0A2TYxSFA1jP1_HMXhdUQEdW1QyTAvG8fIKU7EFk',
-  syncKey: '',
+  syncKey: 'DSG-HUB-PRIVATE',
   actionTrackerSheetName: 'Action Tracker',
   sourceInboxSheetName: 'Source Inbox',
   completionsSheetName: 'Hub Completions',
   inactiveStatuses: ['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved', 'parked', 'deferred'],
-  completionStatus: 'Completed',
+  completionStatus: 'Complete',
   completionActiveValue: 'No'
 };
 
-function onOpen() {
+function dsgHubSyncOnOpen_() {
   SpreadsheetApp.getUi()
     .createMenu('DSG Hub Sync')
     .addItem('Show setup note', 'showHubSyncSetupNote')
@@ -38,15 +37,17 @@ function onOpen() {
 
 function showHubSyncSetupNote() {
   SpreadsheetApp.getUi().alert(
-    'DSG Hub Sync setup:\n\n' +
     'Deploy this Apps Script project as a Web App. Use Execute as Me and access Anyone with the link. ' +
-    'Paste the Web App URL into the Hub using Set Cockpit Sync URL. If you set syncKey in the script, add ?key=YOUR_KEY to that URL.'
+    'Paste the Web App URL into the Hub using Set Cockpit Sync URL. Add ?key=YOUR_KEY to the URL.'
   );
 }
 
 function previewHubData() {
   const payload = buildHubData_();
-  SpreadsheetApp.getUi().alert('Hub preview: ' + payload.tasks.length + ' active task(s), ' + payload.completedTaskIds.length + ' completed hidden task id(s).');
+  SpreadsheetApp.getUi().alert(
+    'Hub preview: ' + payload.tasks.length + ' active task(s), ' +
+    payload.completedTaskIds.length + ' completed hidden task id(s).'
+  );
   return payload;
 }
 
@@ -54,7 +55,11 @@ function doGet(e) {
   const params = getParams_(e);
   const auth = authorize_(params);
   if (!auth.ok) return jsonOutput_(auth, params.callback);
-  if (params.action !== 'hubData') return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=hubData.' }, params.callback);
+
+  if (params.action !== 'hubData') {
+    return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=hubData.' }, params.callback);
+  }
+
   return jsonOutput_(buildHubData_(), params.callback);
 }
 
@@ -62,10 +67,15 @@ function doPost(e) {
   const params = getParams_(e);
   const auth = authorize_(params);
   if (!auth.ok) return jsonOutput_(auth);
-  if (params.action !== 'completeTask') return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=completeTask.' });
+
+  if (params.action !== 'completeTask') {
+    return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=completeTask.' });
+  }
 
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) return jsonOutput_({ ok: false, error: 'Another Hub completion write is already running.' });
+  if (!lock.tryLock(30000)) {
+    return jsonOutput_({ ok: false, error: 'Another Hub completion write is already running.' });
+  }
 
   try {
     const completion = normalizeCompletion_(params);
@@ -85,7 +95,9 @@ function buildHubData_() {
   if (!sheet) throw new Error('Missing sheet: ' + DSG_HUB_SYNC_CONFIG.actionTrackerSheetName);
 
   const values = sheet.getDataRange().getValues();
-  if (values.length < 2) return { ok: true, updatedAt: new Date().toISOString(), tasks: [], completedTaskIds: [] };
+  if (values.length < 2) {
+    return { ok: true, updatedAt: new Date().toISOString(), tasks: [], completedTaskIds: [], resources: [], meetings: [] };
+  }
 
   const headers = buildHeaderMap_(values[0]);
   const tasks = [];
@@ -99,6 +111,7 @@ function buildHubData_() {
     const taskId = getValue_(row, headers, 'Hub Task ID') || slugify_(action);
     const status = getValue_(row, headers, 'Status');
     const active = getValue_(row, headers, 'Active?');
+
     if (isInactiveStatus_(status) || lower_(active) === 'no') {
       completedTaskIds.push(taskId);
       continue;
@@ -107,7 +120,14 @@ function buildHubData_() {
     tasks.push(rowToHubTask_(row, headers, rowIndex + 1, taskId, action));
   }
 
-  return { ok: true, updatedAt: new Date().toISOString(), tasks: tasks, completedTaskIds: completedTaskIds, resources: [], meetings: [] };
+  return {
+    ok: true,
+    updatedAt: new Date().toISOString(),
+    tasks: tasks,
+    completedTaskIds: completedTaskIds,
+    resources: [],
+    meetings: []
+  };
 }
 
 function rowToHubTask_(row, headers, rowNumber, taskId, action) {
@@ -174,10 +194,21 @@ function appendHubCompletion_(completion) {
     'Timestamp', 'Task ID', 'Title', 'Department', 'Owner', 'Completed At', 'Cockpit Backlink', 'Page', 'Source',
     'Evidence', 'Verification 1', 'Verification 2', 'Closure Note'
   ]);
+
   sheet.appendRow([
-    completion.timestamp, completion.taskId, completion.title, completion.department, completion.owner, completion.completedAt,
-    completion.cockpitBacklink, completion.page, completion.source, completion.evidence, completion.verification1,
-    completion.verification2, completion.closureNote
+    completion.timestamp,
+    completion.taskId,
+    completion.title,
+    completion.department,
+    completion.owner,
+    completion.completedAt,
+    completion.cockpitBacklink,
+    completion.page,
+    completion.source,
+    completion.evidence,
+    completion.verification1,
+    completion.verification2,
+    completion.closureNote
   ]);
 }
 
@@ -187,6 +218,7 @@ function appendSourceInboxCompletion_(completion) {
 
   const values = sheet.getDataRange().getValues();
   if (!values.length) return;
+
   const headers = buildHeaderMap_(values[0]);
   const row = new Array(values[0].length).fill('');
 
@@ -199,10 +231,11 @@ function appendSourceInboxCompletion_(completion) {
   setRowValue_(row, headers, 'Suggested Destination Tab', 'Action Tracker');
   setRowValue_(row, headers, 'Urgency', 'High');
   setRowValue_(row, headers, 'Confidence', 'High');
-  setRowValue_(row, headers, 'Currentness Status', 'Completed');
+  setRowValue_(row, headers, 'Currentness Status', 'Resolved');
   setRowValue_(row, headers, 'Source Link / Reference', completion.cockpitBacklink || completion.page || completion.taskId);
   setRowValue_(row, headers, 'Notes', completion.evidence + ' Verification 1: ' + completion.verification1 + ' Verification 2: ' + completion.verification2 + '. Page: ' + completion.page);
   setRowValue_(row, headers, 'Agent Action', 'Write-back');
+
   sheet.appendRow(row);
 }
 
@@ -218,12 +251,14 @@ function updateActionTrackerCompletion_(completion) {
   if (!rowIndex) return { updated: false, reason: 'No matching Action Tracker row found' };
 
   const rowNumber = rowIndex + 1;
+
   writeIfHeader_(sheet, rowNumber, headers, 'Status', DSG_HUB_SYNC_CONFIG.completionStatus);
   writeIfHeader_(sheet, rowNumber, headers, 'Active?', DSG_HUB_SYNC_CONFIG.completionActiveValue);
   writeIfHeader_(sheet, rowNumber, headers, 'Review Flag', 'Closed from Hub');
   writeIfHeader_(sheet, rowNumber, headers, 'Attention Flag', 'Completed from Hub');
   appendIfHeader_(sheet, rowNumber, headers, 'Source', 'Hub completion ' + completion.completedAt + ': ' + (completion.page || completion.source));
   appendIfHeader_(sheet, rowNumber, headers, 'Notes', completion.closureNote + ' Evidence: ' + completion.evidence + ' Verification 1: ' + completion.verification1 + ' Verification 2: ' + completion.verification2 + '.');
+
   return { updated: true, rowNumber: rowNumber };
 }
 
@@ -234,10 +269,12 @@ function findTrackerRow_(values, headers, completion) {
   for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
     if (targetId && lower_(getValue_(values[rowIndex], headers, 'Hub Task ID')) === targetId) return rowIndex;
   }
+
   for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
     const action = lower_(getValue_(values[rowIndex], headers, 'Action') || getValue_(values[rowIndex], headers, 'Task'));
     if (targetTitle && action === targetTitle) return rowIndex;
   }
+
   return null;
 }
 
@@ -248,17 +285,25 @@ function getParams_(e) {
 function authorize_(params) {
   const requiredKey = clean_(DSG_HUB_SYNC_CONFIG.syncKey);
   if (!requiredKey) return { ok: true };
-  return clean_(params.key) === requiredKey ? { ok: true } : { ok: false, error: 'Unauthorized Hub sync request.' };
+  return clean_(params.key) === requiredKey
+    ? { ok: true }
+    : { ok: false, error: 'Unauthorized Hub sync request.' };
 }
 
 function jsonOutput_(payload, callback) {
-  const body = callback ? String(callback) + '(' + JSON.stringify(payload) + ');' : JSON.stringify(payload);
-  const mime = callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON;
+  const body = callback
+    ? String(callback) + '(' + JSON.stringify(payload) + ');'
+    : JSON.stringify(payload);
+
+  const mime = callback
+    ? ContentService.MimeType.JAVASCRIPT
+    : ContentService.MimeType.JSON;
+
   return ContentService.createTextOutput(body).setMimeType(mime);
 }
 
 function getSpreadsheet_() {
-  return SpreadsheetApp.openById(DSG_HUB_SYNC_CONFIG.spreadsheetId);
+  return SpreadsheetApp.getActiveSpreadsheet();
 }
 
 function getOrCreateSheet_(name, headers) {
@@ -296,6 +341,7 @@ function writeIfHeader_(sheet, rowNumber, headers, header, value) {
 function appendIfHeader_(sheet, rowNumber, headers, header, addition) {
   const column = headers[header];
   if (!column || !addition) return;
+
   const range = sheet.getRange(rowNumber, column);
   const existing = clean_(range.getValue());
   range.setValue(existing ? existing + '\n' + addition : addition);
@@ -314,7 +360,10 @@ function isInactiveStatus_(status) {
 }
 
 function slugify_(value) {
-  return lower_(value).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90) || 'hub-task';
+  return lower_(value)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90) || 'hub-task';
 }
 
 function buildSteps_(nextStep, definitionOfDone, source) {
@@ -327,7 +376,11 @@ function buildSteps_(nextStep, definitionOfDone, source) {
 }
 
 function buildPrompt_(action, workstream, definitionOfDone, source) {
-  return 'Help complete this DSG Hub task: ' + action + '. Workstream: ' + workstream + '. Definition of done: ' + (definitionOfDone || 'confirm the finished outcome and evidence') + '. Source: ' + (source || 'Action Tracker row') + '. Keep the output source-backed and review-ready.';
+  return 'Help complete this DSG Hub task: ' + action +
+    '. Workstream: ' + workstream +
+    '. Definition of done: ' + (definitionOfDone || 'confirm the finished outcome and evidence') +
+    '. Source: ' + (source || 'Action Tracker row') +
+    '. Keep the output source-backed and review-ready.';
 }
 
 function inferApprover_(owner, workstream) {
@@ -369,6 +422,7 @@ function inferTool_(text) {
 function inferResourceIds_(text) {
   const source = lower_(text);
   const ids = ['cockpit-action-tracker', 'cockpit-source-inbox', 'dsg-share-folder'];
+
   if (source.indexOf('brand') !== -1) ids.push('dsg-brand-kit', 'canva');
   if (source.indexOf('grant') !== -1 || source.indexOf('fund') !== -1 || source.indexOf('citizens') !== -1) ids.push('grants-folder');
   if (source.indexOf('zeffy') !== -1) ids.push('zeffy');
@@ -377,16 +431,21 @@ function inferResourceIds_(text) {
   if (source.indexOf('google business') !== -1) ids.push('google-business-profile');
   if (source.indexOf('nonprofits') !== -1 || source.indexOf('workspace') !== -1) ids.push('google-nonprofits');
   if (source.indexOf('st-119') !== -1 || source.indexOf('st119') !== -1) ids.push('st119-folder');
-  return ids.filter(function(id, index) { return ids.indexOf(id) === index; });
+
+  return ids.filter(function(id, index) {
+    return ids.indexOf(id) === index;
+  });
 }
 
 function normalizeDepartment_(workstream) {
   const text = lower_(workstream);
+
   if (text.indexOf('marketing') !== -1 || text.indexOf('public') !== -1 || text.indexOf('brand') !== -1) return 'Marketing & Social';
   if (text.indexOf('program') !== -1 || text.indexOf('participant') !== -1 || text.indexOf('registrant') !== -1) return 'Programming / Registrants';
   if (text.indexOf('finance') !== -1 || text.indexOf('admin') !== -1) return 'Finance / Administration';
   if (text.indexOf('compliance') !== -1 || text.indexOf('governance') !== -1 || text.indexOf('board') !== -1) return 'Compliance / Governance';
   if (text.indexOf('fund') !== -1 || text.indexOf('development') !== -1 || text.indexOf('grant') !== -1) return 'Development / Fundraising';
   if (text.indexOf('tech') !== -1 || text.indexOf('google') !== -1) return 'Operations / Technology';
+
   return 'Team Operations';
 }
