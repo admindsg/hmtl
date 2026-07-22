@@ -2,23 +2,24 @@
 DSG Hub Sync API
 Bound Google Apps Script for the DSG Leadership Cockpit.
 
-What this script does:
-- Gives the Hub a Pull from Cockpit button without needing the agent.
-- Lets the Hub post confirmed completions directly into the Cockpit.
-- Keeps completion records additive in Source Inbox and Hub Completions.
-- Marks matching Action Tracker rows Completed and Active? = No when a Hub task is confirmed finished.
+Purpose:
+- Hub users can click Pull from Cockpit without running the agent.
+- Confirmed Hub completions can write directly into Source Inbox and Action Tracker.
+- Completion emails can stay in place as a backup/audit signal.
 
 Install:
 1. Open the DSG Leadership Cockpit spreadsheet.
 2. Go to Extensions > Apps Script.
-3. Paste this file into a new script file, save, and deploy as a Web App.
-4. Deploy settings: Execute as Me; access Anyone with the link.
-5. Copy the Web App URL.
-6. In the Hub, click Set Cockpit Sync URL, paste the URL, then click Pull from Cockpit.
+3. Paste this file into a new script file and save.
+4. Optional but recommended: set syncKey below to a private short phrase.
+5. Deploy as a Web App: Execute as Me; access Anyone with the link.
+6. In the Hub, click Set Cockpit Sync URL and paste the Web App URL.
+   If syncKey is set, append it to the URL as ?key=YOUR_KEY.
 */
 
 const DSG_HUB_SYNC_CONFIG = {
   spreadsheetId: '1znq0A2TYxSFA1jP1_HMXhdUQEdW1QyTAvG8fIKU7EFk',
+  syncKey: '',
   actionTrackerSheetName: 'Action Tracker',
   sourceInboxSheetName: 'Source Inbox',
   completionsSheetName: 'Hub Completions',
@@ -39,7 +40,7 @@ function showHubSyncSetupNote() {
   SpreadsheetApp.getUi().alert(
     'DSG Hub Sync setup:\n\n' +
     'Deploy this Apps Script project as a Web App. Use Execute as Me and access Anyone with the link. ' +
-    'Then paste the Web App URL into the Hub using Set Cockpit Sync URL.'
+    'Paste the Web App URL into the Hub using Set Cockpit Sync URL. If you set syncKey in the script, add ?key=YOUR_KEY to that URL.'
   );
 }
 
@@ -50,23 +51,21 @@ function previewHubData() {
 }
 
 function doGet(e) {
-  const params = e && e.parameter ? e.parameter : {};
-  if (params.action !== 'hubData') {
-    return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=hubData.' }, params.callback);
-  }
+  const params = getParams_(e);
+  const auth = authorize_(params);
+  if (!auth.ok) return jsonOutput_(auth, params.callback);
+  if (params.action !== 'hubData') return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=hubData.' }, params.callback);
   return jsonOutput_(buildHubData_(), params.callback);
 }
 
 function doPost(e) {
-  const params = e && e.parameter ? e.parameter : {};
-  if (params.action !== 'completeTask') {
-    return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=completeTask.' });
-  }
+  const params = getParams_(e);
+  const auth = authorize_(params);
+  if (!auth.ok) return jsonOutput_(auth);
+  if (params.action !== 'completeTask') return jsonOutput_({ ok: false, error: 'Unsupported action. Use action=completeTask.' });
 
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) {
-    return jsonOutput_({ ok: false, error: 'Another Hub completion write is already running.' });
-  }
+  if (!lock.tryLock(30000)) return jsonOutput_({ ok: false, error: 'Another Hub completion write is already running.' });
 
   try {
     const completion = normalizeCompletion_(params);
@@ -82,14 +81,11 @@ function doPost(e) {
 }
 
 function buildHubData_() {
-  const ss = SpreadsheetApp.openById(DSG_HUB_SYNC_CONFIG.spreadsheetId);
-  const sheet = ss.getSheetByName(DSG_HUB_SYNC_CONFIG.actionTrackerSheetName);
+  const sheet = getSpreadsheet_().getSheetByName(DSG_HUB_SYNC_CONFIG.actionTrackerSheetName);
   if (!sheet) throw new Error('Missing sheet: ' + DSG_HUB_SYNC_CONFIG.actionTrackerSheetName);
 
   const values = sheet.getDataRange().getValues();
-  if (values.length < 2) {
-    return { ok: true, updatedAt: new Date().toISOString(), tasks: [], completedTaskIds: [] };
-  }
+  if (values.length < 2) return { ok: true, updatedAt: new Date().toISOString(), tasks: [], completedTaskIds: [] };
 
   const headers = buildHeaderMap_(values[0]);
   const tasks = [];
@@ -100,28 +96,18 @@ function buildHubData_() {
     const action = getValue_(row, headers, 'Action') || getValue_(row, headers, 'Task');
     if (!action) continue;
 
-    const rowNumber = rowIndex + 1;
+    const taskId = getValue_(row, headers, 'Hub Task ID') || slugify_(action);
     const status = getValue_(row, headers, 'Status');
     const active = getValue_(row, headers, 'Active?');
-    const taskId = getValue_(row, headers, 'Hub Task ID') || slugify_(action);
-    const isCompleted = isInactiveStatus_(status) || lower_(active) === 'no';
-
-    if (isCompleted) {
+    if (isInactiveStatus_(status) || lower_(active) === 'no') {
       completedTaskIds.push(taskId);
       continue;
     }
 
-    tasks.push(rowToHubTask_(row, headers, rowNumber, taskId, action));
+    tasks.push(rowToHubTask_(row, headers, rowIndex + 1, taskId, action));
   }
 
-  return {
-    ok: true,
-    updatedAt: new Date().toISOString(),
-    tasks: tasks,
-    completedTaskIds: completedTaskIds,
-    resources: [],
-    meetings: []
-  };
+  return { ok: true, updatedAt: new Date().toISOString(), tasks: tasks, completedTaskIds: completedTaskIds, resources: [], meetings: [] };
 }
 
 function rowToHubTask_(row, headers, rowNumber, taskId, action) {
@@ -132,10 +118,11 @@ function rowToHubTask_(row, headers, rowNumber, taskId, action) {
   const blocker = getValue_(row, headers, 'Blocker / Risk');
   const nextStep = getValue_(row, headers, 'Next Step');
   const notes = getValue_(row, headers, 'Notes');
+  const textForInference = action + ' ' + source + ' ' + workstream;
 
   return {
     id: taskId,
-    title: titleCaseFirst_(action),
+    title: clean_(action),
     department: normalizeDepartment_(workstream),
     category: getValue_(row, headers, 'Decision Lane') || getValue_(row, headers, 'Task Level') || workstream,
     project: getValue_(row, headers, 'Parent Task') || workstream,
@@ -145,9 +132,9 @@ function rowToHubTask_(row, headers, rowNumber, taskId, action) {
     support: 'Use Cockpit row owner/support notes if assigned',
     approves: inferApprover_(owner, workstream),
     due: getValue_(row, headers, 'Due') || getValue_(row, headers, 'Timing Signal') || 'Ask',
-    tool: inferTool_(action + ' ' + source + ' ' + workstream),
+    tool: inferTool_(textForInference),
     audience: inferAudience_(workstream),
-    deliverable: definitionOfDone || nextStep || 'Complete the Action Tracker row outcome and record evidence.',
+    deliverable: definitionOfDone || nextStep || 'Complete the Action Tracker outcome and record evidence.',
     saveFinalIn: inferSaveLocation_(workstream),
     context: blocker || notes || source || 'Pulled from the DSG Leadership Cockpit Action Tracker.',
     nextSteps: buildSteps_(nextStep, definitionOfDone, source),
@@ -155,7 +142,7 @@ function rowToHubTask_(row, headers, rowNumber, taskId, action) {
     verification1: owner + ' verifies the work product or operational outcome is actually complete.',
     verification2: inferApprover_(owner, workstream) + ' confirms the task can close.',
     cockpitBacklink: 'Action Tracker row ' + rowNumber + (source ? '; ' + source : ''),
-    links: inferResourceIds_(action + ' ' + source + ' ' + workstream),
+    links: inferResourceIds_(textForInference),
     prompt: buildPrompt_(action, workstream, definitionOfDone, source)
   };
 }
@@ -187,27 +174,15 @@ function appendHubCompletion_(completion) {
     'Timestamp', 'Task ID', 'Title', 'Department', 'Owner', 'Completed At', 'Cockpit Backlink', 'Page', 'Source',
     'Evidence', 'Verification 1', 'Verification 2', 'Closure Note'
   ]);
-
   sheet.appendRow([
-    completion.timestamp,
-    completion.taskId,
-    completion.title,
-    completion.department,
-    completion.owner,
-    completion.completedAt,
-    completion.cockpitBacklink,
-    completion.page,
-    completion.source,
-    completion.evidence,
-    completion.verification1,
-    completion.verification2,
-    completion.closureNote
+    completion.timestamp, completion.taskId, completion.title, completion.department, completion.owner, completion.completedAt,
+    completion.cockpitBacklink, completion.page, completion.source, completion.evidence, completion.verification1,
+    completion.verification2, completion.closureNote
   ]);
 }
 
 function appendSourceInboxCompletion_(completion) {
-  const ss = SpreadsheetApp.openById(DSG_HUB_SYNC_CONFIG.spreadsheetId);
-  const sheet = ss.getSheetByName(DSG_HUB_SYNC_CONFIG.sourceInboxSheetName);
+  const sheet = getSpreadsheet_().getSheetByName(DSG_HUB_SYNC_CONFIG.sourceInboxSheetName);
   if (!sheet) return;
 
   const values = sheet.getDataRange().getValues();
@@ -228,30 +203,27 @@ function appendSourceInboxCompletion_(completion) {
   setRowValue_(row, headers, 'Source Link / Reference', completion.cockpitBacklink || completion.page || completion.taskId);
   setRowValue_(row, headers, 'Notes', completion.evidence + ' Verification 1: ' + completion.verification1 + ' Verification 2: ' + completion.verification2 + '. Page: ' + completion.page);
   setRowValue_(row, headers, 'Agent Action', 'Write-back');
-
   sheet.appendRow(row);
 }
 
 function updateActionTrackerCompletion_(completion) {
-  const ss = SpreadsheetApp.openById(DSG_HUB_SYNC_CONFIG.spreadsheetId);
-  const sheet = ss.getSheetByName(DSG_HUB_SYNC_CONFIG.actionTrackerSheetName);
+  const sheet = getSpreadsheet_().getSheetByName(DSG_HUB_SYNC_CONFIG.actionTrackerSheetName);
   if (!sheet) return { updated: false, reason: 'Missing Action Tracker sheet' };
 
   const values = sheet.getDataRange().getValues();
   if (values.length < 2) return { updated: false, reason: 'Action Tracker has no task rows' };
 
   const headers = buildHeaderMap_(values[0]);
-  const match = findTrackerRow_(values, headers, completion);
-  if (!match) return { updated: false, reason: 'No matching Action Tracker row found' };
+  const rowIndex = findTrackerRow_(values, headers, completion);
+  if (!rowIndex) return { updated: false, reason: 'No matching Action Tracker row found' };
 
-  const rowNumber = match + 1;
+  const rowNumber = rowIndex + 1;
   writeIfHeader_(sheet, rowNumber, headers, 'Status', DSG_HUB_SYNC_CONFIG.completionStatus);
   writeIfHeader_(sheet, rowNumber, headers, 'Active?', DSG_HUB_SYNC_CONFIG.completionActiveValue);
   writeIfHeader_(sheet, rowNumber, headers, 'Review Flag', 'Closed from Hub');
   writeIfHeader_(sheet, rowNumber, headers, 'Attention Flag', 'Completed from Hub');
   appendIfHeader_(sheet, rowNumber, headers, 'Source', 'Hub completion ' + completion.completedAt + ': ' + (completion.page || completion.source));
   appendIfHeader_(sheet, rowNumber, headers, 'Notes', completion.closureNote + ' Evidence: ' + completion.evidence + ' Verification 1: ' + completion.verification1 + ' Verification 2: ' + completion.verification2 + '.');
-
   return { updated: true, rowNumber: rowNumber };
 }
 
@@ -260,18 +232,23 @@ function findTrackerRow_(values, headers, completion) {
   const targetTitle = lower_(completion.title);
 
   for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-    const row = values[rowIndex];
-    const hubTaskId = lower_(getValue_(row, headers, 'Hub Task ID'));
-    if (targetId && hubTaskId === targetId) return rowIndex;
+    if (targetId && lower_(getValue_(values[rowIndex], headers, 'Hub Task ID')) === targetId) return rowIndex;
   }
-
   for (let rowIndex = 1; rowIndex < values.length; rowIndex += 1) {
-    const row = values[rowIndex];
-    const action = lower_(getValue_(row, headers, 'Action') || getValue_(row, headers, 'Task'));
+    const action = lower_(getValue_(values[rowIndex], headers, 'Action') || getValue_(values[rowIndex], headers, 'Task'));
     if (targetTitle && action === targetTitle) return rowIndex;
   }
-
   return null;
+}
+
+function getParams_(e) {
+  return e && e.parameter ? e.parameter : {};
+}
+
+function authorize_(params) {
+  const requiredKey = clean_(DSG_HUB_SYNC_CONFIG.syncKey);
+  if (!requiredKey) return { ok: true };
+  return clean_(params.key) === requiredKey ? { ok: true } : { ok: false, error: 'Unauthorized Hub sync request.' };
 }
 
 function jsonOutput_(payload, callback) {
@@ -280,8 +257,12 @@ function jsonOutput_(payload, callback) {
   return ContentService.createTextOutput(body).setMimeType(mime);
 }
 
+function getSpreadsheet_() {
+  return SpreadsheetApp.openById(DSG_HUB_SYNC_CONFIG.spreadsheetId);
+}
+
 function getOrCreateSheet_(name, headers) {
-  const ss = SpreadsheetApp.openById(DSG_HUB_SYNC_CONFIG.spreadsheetId);
+  const ss = getSpreadsheet_();
   let sheet = ss.getSheetByName(name);
   if (!sheet) sheet = ss.insertSheet(name);
   if (sheet.getLastRow() === 0) sheet.appendRow(headers);
@@ -299,8 +280,7 @@ function buildHeaderMap_(headers) {
 
 function getValue_(row, headers, header) {
   const column = headers[header];
-  if (!column) return '';
-  return clean_(row[column - 1]);
+  return column ? clean_(row[column - 1]) : '';
 }
 
 function setRowValue_(row, headers, header, value) {
@@ -335,11 +315,6 @@ function isInactiveStatus_(status) {
 
 function slugify_(value) {
   return lower_(value).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90) || 'hub-task';
-}
-
-function titleCaseFirst_(value) {
-  const text = clean_(value);
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }
 
 function buildSteps_(nextStep, definitionOfDone, source) {
