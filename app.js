@@ -1,8 +1,10 @@
-const dataVersion = '20260722-cockpit-refresh';
+const dataVersion = '20260722-completion-flow';
 const teamMembers = ['Andrew', 'Clark', 'Karena', 'Monae', 'Omari', 'Richard'];
 const priorityRank = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
 const inactiveStatuses = new Set(['complete', 'completed', 'confirmed complete', 'archived', 'sent', 'superseded', 'resolved', 'parked', 'deferred']);
-const state = { tasks: [], resources: [], meetings: [], resourceMap: new Map(), selectedTaskId: null, filters: { search: '', person: 'all', department: 'all' } };
+const completedStorageKey = 'dsg-hub-completed-task-ids';
+const pendingCompletionKey = 'dsg-hub-pending-completions';
+const state = { tasks: [], resources: [], meetings: [], resourceMap: new Map(), completedTaskIds: new Set(), selectedTaskId: null, filters: { search: '', person: 'all', department: 'all' } };
 
 const resourceGroups = [
   { title: 'Cockpit & Source Evidence', note: 'Use to confirm active work, source rows, backlinks, and completion evidence.', resources: ['cockpit-action-tracker', 'cockpit-source-inbox', 'dsg-share-folder'] },
@@ -36,12 +38,25 @@ function escapeHtml(value) {
   return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 
+function readJsonStorage(key, fallback) {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writeJsonStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 function normalizeStatus(value) {
   return String(value || '').trim().toLowerCase();
 }
 
 function isVisibleTask(task) {
-  return !inactiveStatuses.has(normalizeStatus(task.status));
+  return !inactiveStatuses.has(normalizeStatus(task.status)) && !state.completedTaskIds.has(task.id);
 }
 
 function splitPeople(value) {
@@ -125,7 +140,7 @@ function renderTaskDetail(task) {
   }
   const links = (task.links || []).map(id => state.resourceMap.get(id)).filter(Boolean).map(resource => `<a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer" title="${escapeHtml(resource.useWhen)}">${escapeHtml(resource.label)}</a>`).join('');
   const steps = (task.nextSteps || []).map(step => `<li>${escapeHtml(step)}</li>`).join('');
-  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><dl class="meta-grid"><div><dt>Required evidence</dt><dd>${escapeHtml(task.requiredEvidence || 'Save the source-backed proof or blocker note before requesting closure.')}</dd></div><div><dt>Verification 1</dt><dd>${escapeHtml(task.verification1 || 'Reviewer 1 confirms the work product or outcome is complete.')}</dd></div><div><dt>Verification 2</dt><dd>${escapeHtml(task.verification2 || 'Reviewer 2 confirms leadership, owner, or approval closure.')}</dd></div><div><dt>Cockpit backlink</dt><dd>${escapeHtml(task.cockpitBacklink || task.id)}</dd></div></dl><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt || '')}</p><button class="copy-button prompt-copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Submit for Andrew review</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Hub flow:</strong> This sends a review signal only. The task stays visible until completion evidence, Verification 1, Verification 2, and the Cockpit backlink are confirmed in the Cockpit.</p></article>`;
+  els.taskDetail.innerHTML = `<article class="detail-card"><div class="card-topline"><span class="badge category">${escapeHtml(task.department || task.category)}</span><span class="badge status">${escapeHtml(task.status)}</span></div><h2>${escapeHtml(task.title)}</h2><p class="context">${escapeHtml(task.context)}</p><div class="next-action-block"><strong>Deliverable</strong><p>${escapeHtml(task.deliverable)}</p></div><dl class="meta-grid"><div><dt>Owner</dt><dd>${escapeHtml(task.owner)}</dd></div><div><dt>Support</dt><dd>${escapeHtml(task.support)}</dd></div><div><dt>Approves</dt><dd>${escapeHtml(task.approves)}</dd></div><div><dt>Due</dt><dd>${escapeHtml(formatDueLabel(task.due))}</dd></div><div><dt>Tool</dt><dd>${escapeHtml(task.tool)}</dd></div><div><dt>Save final in</dt><dd>${escapeHtml(task.saveFinalIn)}</dd></div></dl><div class="link-block"><strong>Use these links</strong><div class="links">${links}</div></div><details open><summary>Steps to complete</summary><ol class="next-steps">${steps}</ol></details><dl class="meta-grid"><div><dt>Required evidence</dt><dd>${escapeHtml(task.requiredEvidence || 'Completion confirmed from the Hub.')}</dd></div><div><dt>Verification 1</dt><dd>${escapeHtml(task.verification1 || 'Confirmed finished in the Hub.')}</dd></div><div><dt>Verification 2</dt><dd>${escapeHtml(task.verification2 || 'Completion confirmation accepted in the Hub.')}</dd></div><div><dt>Cockpit backlink</dt><dd>${escapeHtml(task.cockpitBacklink || task.id)}</dd></div></dl><details><summary>Prompt starter</summary><p class="prompt">${escapeHtml(task.prompt || '')}</p><button class="copy-button prompt-copy-button" type="button">Copy prompt</button></details><button class="copy-button step-complete-button" type="button">Mark finished</button><p class="completion-status" role="status" aria-live="polite"></p><p class="intake-note"><strong>Completion flow:</strong> Confirming this task finished removes it from this Hub immediately and sends a completion record for backend/Cockpit processing.</p></article>`;
 }
 
 function renderAndrewWork() {
@@ -155,6 +170,7 @@ function render() {
   renderQuickGlance(tasks);
   renderTaskList(tasks);
   renderTaskDetail(tasks.find(task => task.id === state.selectedTaskId));
+  renderAndrewWork();
 }
 
 function selectTask(id) {
@@ -163,37 +179,76 @@ function selectTask(id) {
   els.taskDetail?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function handleReviewSubmit(button, task) {
-  const confirmed = window.confirm(`Submit this task for Andrew review?\n\nThis will not hide the task or request Cockpit completion.\n\n${task.title}`);
-  if (!confirmed) return;
-  const status = els.taskDetail.querySelector('.completion-status');
+function completionPayload(task) {
+  const completedAt = new Date().toISOString();
+  return {
+    taskId: task.id,
+    title: task.title,
+    department: task.department || task.category || '',
+    owner: task.owner || '',
+    completedAt,
+    cockpitBacklink: task.cockpitBacklink || task.id,
+    page: window.location.href,
+    source: 'DSG Communications Hub'
+  };
+}
+
+function markTaskFinishedLocally(task) {
+  state.completedTaskIds.add(task.id);
+  writeJsonStorage(completedStorageKey, [...state.completedTaskIds]);
+  state.selectedTaskId = null;
+  populateFilters();
+  render();
+}
+
+async function postCompletion(payload) {
   const formData = new FormData();
-  formData.append('_subject', `DSG Hub review signal: ${task.title}`);
+  formData.append('_subject', `DSG Hub completed task: ${payload.title}`);
   formData.append('_template', 'table');
   formData.append('_captcha', 'false');
-  formData.append('Page', window.location.href);
-  formData.append('Task ID', task.id);
-  formData.append('Task title', task.title);
-  formData.append('Department', task.department || task.category || '');
-  formData.append('Owner', task.owner || '');
-  formData.append('Support', task.support || '');
-  formData.append('Approves', task.approves || '');
-  formData.append('Save final in', task.saveFinalIn || '');
-  formData.append('Cockpit action requested', 'Andrew review signal only. Do not mark complete unless completion evidence, Verification 1, Verification 2, and Cockpit backlink are confirmed.');
-  formData.append('Required evidence', task.requiredEvidence || 'Evidence not listed in task data.');
-  formData.append('Verification 1', task.verification1 || 'Reviewer 1 must confirm completion.');
-  formData.append('Verification 2', task.verification2 || 'Reviewer 2/approver must confirm closure.');
-  formData.append('Cockpit backlink field', task.cockpitBacklink || task.id);
-  status.textContent = 'Submitting review signal...';
-  button.disabled = true;
+  formData.append('Completion status', 'Completed in Hub');
+  formData.append('Task ID', payload.taskId);
+  formData.append('Task title', payload.title);
+  formData.append('Department', payload.department);
+  formData.append('Owner', payload.owner);
+  formData.append('Completed at', payload.completedAt);
+  formData.append('Cockpit backlink', payload.cockpitBacklink);
+  formData.append('Page', payload.page);
+  formData.append('Source', payload.source);
+  formData.append('Cockpit action requested', 'Mark completed or add completion record in Source Inbox/Action Tracker. Task has already been hidden from Hub UI.');
+  const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', { method: 'POST', headers: { Accept: 'application/json' }, body: formData });
+  if (!response.ok) throw new Error('Completion submission failed');
+}
+
+function queueCompletion(payload) {
+  const pending = readJsonStorage(pendingCompletionKey, []);
+  pending.push(payload);
+  writeJsonStorage(pendingCompletionKey, pending);
+}
+
+async function retryPendingCompletions() {
+  const pending = readJsonStorage(pendingCompletionKey, []);
+  if (!pending.length) return;
+  const remaining = [];
+  for (const payload of pending) {
+    try {
+      await postCompletion(payload);
+    } catch (error) {
+      remaining.push(payload);
+    }
+  }
+  writeJsonStorage(pendingCompletionKey, remaining);
+}
+
+async function handleTaskFinished(task) {
+  const confirmed = window.confirm(`Are you sure this task is finished?\n\n${task.title}\n\nIf you click OK, it will disappear from the Hub.`);
+  if (!confirmed) return;
+  const payload = completionPayload(task);
+  markTaskFinishedLocally(task);
   try {
-    const response = await fetch('https://formsubmit.co/ajax/admin@discoverysoundgarden.com', { method: 'POST', headers: { Accept: 'application/json' }, body: formData });
-    if (!response.ok) throw new Error('Review submission failed');
-    status.textContent = 'Sent for Andrew review. The task stays visible until verified closed.';
+    await postCompletion(payload);
   } catch (error) {
-    status.textContent = 'Could not submit review signal. Please try again in a moment.';
-  } finally {
-    button.disabled = false;
+    queueCompletion(payload);
   }
 }
 
@@ -219,22 +274,28 @@ async function handleSuggestionSubmit(event) {
 }
 
 async function loadData() {
-  const [tasksResponse, resourcesResponse, meetingsResponse] = await Promise.all([
+  state.completedTaskIds = new Set(readJsonStorage(completedStorageKey, []));
+  const [tasksResponse, resourcesResponse, meetingsResponse, completedResponse] = await Promise.all([
     fetch(`data/tasks.json?v=${dataVersion}`),
     fetch(`data/resources.json?v=${dataVersion}`),
-    fetch(`data/meetings.json?v=${dataVersion}`).catch(() => null)
+    fetch(`data/meetings.json?v=${dataVersion}`).catch(() => null),
+    fetch(`data/completed-tasks.json?v=${dataVersion}`).catch(() => null)
   ]);
   if (!tasksResponse.ok || !resourcesResponse.ok) throw new Error('Could not load hub data.');
-  state.tasks = (await tasksResponse.json()).filter(isVisibleTask);
+  if (completedResponse && completedResponse.ok) {
+    const completedPayload = await completedResponse.json();
+    (completedPayload.completedTaskIds || []).forEach(id => state.completedTaskIds.add(id));
+  }
+  state.tasks = await tasksResponse.json();
   state.resources = await resourcesResponse.json();
   state.meetings = meetingsResponse && meetingsResponse.ok ? await meetingsResponse.json() : [];
   state.resourceMap = new Map(state.resources.map(resource => [resource.id, resource]));
-  state.selectedTaskId = state.tasks[0]?.id || null;
+  state.selectedTaskId = getActiveTasks()[0]?.id || null;
   populateFilters();
   renderResources();
-  renderAndrewWork();
   renderMeetings();
   render();
+  retryPendingCompletions();
 }
 
 els.searchInput?.addEventListener('input', event => { state.filters.search = event.target.value; render(); });
@@ -252,7 +313,7 @@ document.addEventListener('click', async event => {
   }
   if (event.target.matches('.step-complete-button')) {
     const task = state.tasks.find(item => item.id === state.selectedTaskId);
-    if (task) handleReviewSubmit(event.target, task);
+    if (task) handleTaskFinished(task);
   }
 });
 
